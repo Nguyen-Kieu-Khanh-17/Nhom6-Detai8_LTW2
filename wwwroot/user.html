@@ -1,0 +1,441 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Cổng Bệnh nhân | Medika Clinic</title>
+  <link rel="stylesheet" href="/role.css?v=6.0">
+  <link rel="stylesheet" href="/chatbot.css?v=6.0">
+  <style>
+    .tag.pending { background: #fffbeb; color: #92400e; border: 1px solid #fef3c7; }
+    .tag.confirmed { background: #eff6ff; color: #1e40af; border: 1px solid #dbeafe; }
+    .tag.checkedin { background: #eef2ff; color: #3730a3; font-weight: 700; border: 1px solid #e0e7ff; }
+    .tag.completed { background: #ecfdf5; color: #065f46; border: 1px solid #d1fae5; }
+    .tag.cancelled { background: #fef2f2; color: #991b1b; border: 1px solid #fee2e2; }
+    .tag.reschedule { background: #fff7ed; color: #c2410c; font-weight: 700; border: 1px solid #fed7aa; }
+    
+    .record-card {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 16px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+      transition: all 0.2s ease;
+    }
+    .record-card:hover {
+      box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+      border-color: #cbd5e1;
+    }
+    .record-card h4 {
+      margin: 0 0 6px 0;
+      color: #0f172a;
+      font-size: 1.05rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .record-meta {
+      font-size: 0.82rem;
+      color: #64748b;
+      margin-bottom: 12px;
+    }
+    .record-body {
+      font-size: 0.9rem;
+      color: #334155;
+      line-height: 1.6;
+    }
+    .prescription-box {
+      background: #f8fafc;
+      border-left: 4px solid #2563eb;
+      border-radius: 0 8px 8px 0;
+      padding: 12px 14px;
+      margin-top: 12px;
+      font-size: 0.88rem;
+    }
+    
+    .btn-action-sm {
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.15s ease;
+    }
+    .btn-reschedule { background: #ea580c; color: #fff; }
+    .btn-reschedule:hover { background: #c2410c; }
+    .btn-review { background: #f59e0b; color: #fff; }
+    .btn-review:hover { background: #d97706; }
+    .btn-cancel { background: #f1f5f9; color: #ef4444; border: 1px solid #fee2e2; }
+    .btn-cancel:hover { background: #fef2f2; }
+    .btn-print { background: #059669; color: #fff; }
+    .btn-print:hover { background: #047857; }
+
+    /* Modal Backdrop & Container */
+    .modal-backdrop {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(15, 23, 42, 0.6);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9998;
+    }
+    .modal-box {
+      background: #fff;
+      border-radius: 16px;
+      width: 520px;
+      max-width: 90vw;
+      padding: 26px;
+      box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+      border: 1px solid #e2e8f0;
+      animation: modalFade 0.2s ease-out;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    @keyframes modalFade {
+      from { opacity: 0; transform: scale(0.96) translateY(8px); }
+      to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 18px;
+    }
+    .modal-header h3 {
+      margin: 0;
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: #0f172a;
+    }
+    .modal-close {
+      background: #f1f5f9;
+      border: none;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      font-size: 1.1rem;
+      cursor: pointer;
+      color: #64748b;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s ease;
+    }
+    .modal-close:hover {
+      background: #fee2e2;
+      color: #ef4444;
+    }
+
+    /* Print styles */
+    @media print {
+      body * { visibility: hidden; }
+      #printable-area, #printable-area * { visibility: visible; }
+      #printable-area { position: absolute; left: 0; top: 0; width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <aside class="rail">
+      <div class="brand"><span class="brand-mark">+</span> medika</div>
+      <p>CỔNG BỆNH NHÂN<br>Đặt lịch khám trực tuyến & Sổ sức khỏe điện tử</p>
+      <nav class="nav">
+        <a class="active" href="/user.html">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+          Lịch khám & Bệnh án
+        </a>
+        <a href="#booking-section">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+          Đặt lịch khám mới
+        </a>
+        <a href="#support-section">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+          Hỗ trợ trực tuyến 24/7
+        </a>
+      </nav>
+      <div class="rail-bottom">Bảo mật thông tin y tế chuẩn HIPAA</div>
+    </aside>
+
+    <main class="main">
+      <header class="top">
+        <div>
+          <h1>Cổng thông tin & Chăm sóc Bệnh nhân</h1>
+          <p id="welcome">Đang tải thông tin tài khoản...</p>
+        </div>
+        <div style="display:flex;gap:10px;">
+          <button class="button" style="background:#0284c7;font-size:0.85rem;padding:8px 14px;" onclick="openProfileModal()">
+            👤 Hồ sơ cá nhân & BHYT
+          </button>
+          <button id="logout" class="logout">Đăng xuất</button>
+        </div>
+      </header>
+
+      <!-- LIVE QUEUE TRACKER BANNER (HIỆN KHI CÓ CHECK-IN) -->
+      <div id="live-queue-banner" style="display:none;background:linear-gradient(135deg, #1e3a8a, #3b82f6);color:#fff;border-radius:14px;padding:18px 22px;margin-bottom:20px;box-shadow:0 4px 14px rgba(37,99,235,0.25);align-items:center;justify-content:space-between;">
+        <div>
+          <div style="font-size:0.8rem;text-transform:uppercase;letter-spacing:0.05em;color:#bfdbfe;font-weight:700;">🏥 HỆ THỐNG XẾP HÀNG TỰ ĐỘNG MEDIKA</div>
+          <div style="font-size:1.4rem;font-weight:800;margin:4px 0;" id="live-queue-stt">Số thứ tự khám của bạn: #--</div>
+          <div style="font-size:0.88rem;color:#e0e7ff;" id="live-queue-desc">Bạn đã check-in tại quầy lễ tân. Vui lòng theo dõi bảng hiển thị hoặc loa gọi của bác sĩ tại phòng khám!</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.18);padding:10px 18px;border-radius:12px;text-align:center;backdrop-filter:blur(4px);">
+          <div style="font-size:0.75rem;color:#bfdbfe;font-weight:600;">TRẠNG THÁI</div>
+          <strong style="font-size:1.05rem;color:#fff;">ĐANG CHỜ BÁC SĨ GỌI</strong>
+        </div>
+      </div>
+
+      <section class="grid">
+        <!-- ĐẶT LỊCH KHÁM THÔNG MINH -->
+        <article class="card wide" id="booking-section">
+          <h2>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+            Đặt lịch khám bệnh thông minh
+          </h2>
+          <form id="booking-form" class="form">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+              <label>Chuyên khoa khám
+                <select id="specialty" required>
+                  <option value="">Chọn chuyên khoa</option>
+                </select>
+              </label>
+              <label>Bác sĩ chuyên khoa
+                <select id="doctor-id" required>
+                  <option value="">Chọn bác sĩ</option>
+                </select>
+              </label>
+            </div>
+            <label>Ngày & Khung giờ khám mong muốn
+              <input id="appointment-date" type="datetime-local" required>
+            </label>
+            <label>Triệu chứng / Lý do khám bệnh
+              <textarea id="reason" required placeholder="Mô tả cụ thể cảm giác khó chịu, triệu chứng kéo dài bao lâu để bác sĩ chuẩn bị chu đáo..."></textarea>
+            </label>
+            <button class="button" type="submit" style="background:#2563eb;">
+              📅 Xác nhận gửi yêu cầu đặt lịch
+            </button>
+          </form>
+          <p id="message" class="message"></p>
+        </article>
+
+        <!-- KÊNH HỖ TRỢ BỆNH NHÂN -->
+        <article class="card" id="support-section">
+          <h2>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0d9488" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+            Trung tâm Chăm sóc khách hàng
+          </h2>
+          <form id="support-form" class="form">
+            <label>Chủ đề thắc mắc
+              <input id="subject" required placeholder="Ví dụ: Tư vấn BHYT, Đổi bác sĩ...">
+            </label>
+            <label>Nội dung câu hỏi
+              <textarea id="content" required placeholder="Chi tiết yêu cầu cần hỗ trợ..."></textarea>
+            </label>
+            <button class="button alt" type="submit">Gửi câu hỏi hỗ trợ (Ticket)</button>
+          </form>
+
+          <hr style="border:none;border-top:1px solid #e2e8f0;margin:18px 0;">
+
+          <div>
+            <p style="font-size:0.85rem;color:#64748b;margin-bottom:10px;">Cần tư vấn trực tiếp ngay bây giờ?</p>
+            <button class="button" type="button" style="background:#4f46e5;width:100%;box-shadow:0 4px 12px rgba(79,70,229,0.25);" onclick="openPatientChatModal()">
+              💬 Chat Trực Tuyến với Nhân Viên CSKH (1-1)
+            </button>
+          </div>
+        </article>
+
+        <!-- DANH SÁCH LỊCH HẸN CỦA TÔI -->
+        <article class="card full">
+          <h2>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+            Lịch hẹn khám bệnh của bạn
+          </h2>
+          <div id="appointments" class="list"></div>
+        </article>
+
+        <!-- SỔ SỨC KHỎE ĐIỆN TỬ -->
+        <article class="card full">
+          <h2>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+            Sổ sức khỏe điện tử (Kết quả khám & Đơn thuốc)
+          </h2>
+          <div id="medical-records-list" class="list">
+            <p class="label">Đang tải hồ sơ bệnh án...</p>
+          </div>
+        </article>
+      </section>
+    </main>
+  </div>
+
+  <!-- Modal Đổi lịch khám -->
+  <div id="reschedule-modal" class="modal-backdrop" style="display:none;">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3>🗓️ Đổi lịch khám bệnh</h3>
+        <button class="modal-close" onclick="closeRescheduleModal()">✕</button>
+      </div>
+      <form id="reschedule-form" class="form">
+        <input type="hidden" id="reschedule-appt-id">
+        <p id="reschedule-info" style="font-size:0.88rem;color:#475569;margin-bottom:12px;background:#f8fafc;padding:10px;border-radius:8px;border:1px solid #e2e8f0;"></p>
+        <label>Thời gian khám mới mong muốn
+          <input id="reschedule-new-date" type="datetime-local" required>
+        </label>
+        <label>Lý do đổi lịch (tùy chọn)
+          <textarea id="reschedule-reason" placeholder="Ví dụ: Bận việc gia đình đột xuất, muốn đổi sang buổi sáng..."></textarea>
+        </label>
+        <div style="display:flex;gap:10px;margin-top:16px;">
+          <button class="button" type="submit" style="background:#ea580c;flex:1;">Xác nhận đổi lịch</button>
+          <button class="button alt" type="button" onclick="closeRescheduleModal()">Hủy bỏ</button>
+        </div>
+        <p id="reschedule-message" class="message" style="margin-top:8px;"></p>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal Đánh giá bác sĩ -->
+  <div id="review-modal" class="modal-backdrop" style="display:none;">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3>⭐ Đánh giá Bác sĩ & Dịch vụ</h3>
+        <button class="modal-close" onclick="closeReviewModal()">✕</button>
+      </div>
+      <form id="review-form" class="form">
+        <input type="hidden" id="review-appt-id">
+        <input type="hidden" id="review-doctor-id">
+        <p id="review-doctor-info" style="font-size:0.95rem;font-weight:700;color:#0f172a;margin-bottom:12px;background:#f8fafc;padding:10px;border-radius:8px;border:1px solid #e2e8f0;"></p>
+        <label>Mức độ hài lòng của bạn
+          <select id="review-rating" required style="font-size:1rem;font-weight:700;padding:10px;">
+            <option value="5" selected>⭐⭐⭐⭐⭐ (5 sao - Rất hài lòng)</option>
+            <option value="4">⭐⭐⭐⭐ (4 sao - Tốt & chu đáo)</option>
+            <option value="3">⭐⭐⭐ (3 sao - Bình thường)</option>
+            <option value="2">⭐⭐ (2 sao - Cần cải thiện)</option>
+            <option value="1">⭐ (1 sao - Không hài lòng)</option>
+          </select>
+        </label>
+        <label>Nhận xét / Góp ý chân thành của bạn
+          <textarea id="review-comment" required placeholder="Bác sĩ khám nhiệt tình, tư vấn chi tiết, phòng khám sạch sẽ..."></textarea>
+        </label>
+        <div style="display:flex;gap:10px;margin-top:16px;">
+          <button class="button" type="submit" style="background:#f59e0b;flex:1;">Gửi đánh giá</button>
+          <button class="button alt" type="button" onclick="closeReviewModal()">Đóng</button>
+        </div>
+        <p id="review-message" class="message" style="margin-top:8px;"></p>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal Cập nhật Hồ sơ cá nhân & BHYT -->
+  <div id="profile-modal" class="modal-backdrop" style="display:none;">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3>👤 Hồ sơ cá nhân & Thẻ BHYT</h3>
+        <button class="modal-close" onclick="closeProfileModal()">✕</button>
+      </div>
+      <form id="profile-form" class="form">
+        <label>Họ và tên bệnh nhân
+          <input id="profile-fullname" required placeholder="Nguyễn Văn A">
+        </label>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <label>Ngày sinh
+            <input id="profile-dob" type="date" required>
+          </label>
+          <label>Số điện thoại
+            <input id="profile-phone" required placeholder="0901234567">
+          </label>
+        </div>
+        <label>Số thẻ Bảo hiểm y tế (BHYT)
+          <input id="profile-insurance" placeholder="Ví dụ: DN4791234567890">
+          <small style="color:#64748b;">Số thẻ BHYT hợp lệ được tự động hưởng chế độ giảm trừ viện phí khi thanh toán.</small>
+        </label>
+        <label>Địa chỉ thường trú
+          <input id="profile-address" required placeholder="Số nhà, tên đường, quận huyện, tỉnh thành...">
+        </label>
+        <label>Tiền sử bệnh / Dị ứng thuốc
+          <textarea id="profile-history" placeholder="Ví dụ: Dị ứng kháng sinh nhóm Penicillin, hen suyễn nhẹ..."></textarea>
+        </label>
+        <div style="display:flex;gap:10px;margin-top:16px;">
+          <button class="button" type="submit" style="background:#0284c7;flex:1;">💾 Lưu thông tin</button>
+          <button class="button alt" type="button" onclick="closeProfileModal()">Đóng</button>
+        </div>
+        <p id="profile-message" class="message" style="margin-top:8px;"></p>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal Xem / In Phiếu khám bệnh & Đơn thuốc -->
+  <div id="print-record-modal" class="modal-backdrop" style="display:none;">
+    <div class="modal-box" style="width:680px;">
+      <div class="modal-header">
+        <h3>🖨️ Phiếu Khám Bệnh & Đơn Thuốc Điện Tử</h3>
+        <button class="modal-close" onclick="closePrintModal()">✕</button>
+      </div>
+      <div id="printable-area" style="background:#fff;padding:16px;border:1px solid #cbd5e1;border-radius:10px;font-family:'Plus Jakarta Sans',sans-serif;">
+        <!-- Header phòng khám -->
+        <div style="display:flex;justify-content:space-between;border-bottom:2px solid #2563eb;padding-bottom:12px;margin-bottom:14px;">
+          <div>
+            <h2 style="margin:0;color:#1e40af;font-size:1.3rem;">PHÒNG KHÁM ĐA KHOA MEDIKA</h2>
+            <small style="color:#64748b;">Địa chỉ: 123 Đường Hải Châu, TP. Đà Nẵng · Hotline: 1900-8888</small>
+          </div>
+          <div style="text-align:right;">
+            <strong style="color:#0f172a;display:block;">SỔ SỨC KHỎE ĐIỆN TỬ</strong>
+            <small id="print-doc-date" style="color:#64748b;"></small>
+          </div>
+        </div>
+
+        <!-- Thông tin bệnh nhân -->
+        <div id="print-patient-info" style="margin-bottom:12px;background:#f8fafc;padding:10px;border-radius:8px;font-size:0.9rem;"></div>
+
+        <!-- Chi tiết khám lâm sàng -->
+        <div id="print-clinical-info" style="margin-bottom:12px;font-size:0.9rem;line-height:1.6;"></div>
+
+        <!-- Đơn thuốc -->
+        <div id="print-prescription-info" style="margin-bottom:14px;"></div>
+
+        <!-- Chữ ký bác sĩ -->
+        <div style="display:flex;justify-content:flex-end;margin-top:20px;text-align:center;">
+          <div style="width:200px;">
+            <small style="color:#64748b;">Bác sĩ điều trị ký tên</small>
+            <div style="height:50px;"></div>
+            <strong id="print-doctor-sign" style="display:block;border-top:1px dashed #cbd5e1;padding-top:4px;"></strong>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:16px;">
+        <button class="button" style="background:#059669;" onclick="window.print()">🖨️ In trang này / Lưu PDF</button>
+        <button class="button alt" onclick="closePrintModal()">Đóng</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Live Chat 1-1 với CSKH -->
+  <div id="patient-chat-modal" class="modal-backdrop" style="display:none;">
+    <div class="modal-box" style="width:500px;height:560px;display:flex;flex-direction:column;">
+      <div class="modal-header" style="margin-bottom:12px;">
+        <div>
+          <h3 style="margin:0;font-size:1.15rem;">💬 Chat Trực Tuyến với CSKH</h3>
+          <small style="color:#64748b;">Hỗ trợ giải đáp & Đặt lịch khám trực tiếp</small>
+        </div>
+        <button class="modal-close" onclick="closePatientChatModal()">✕</button>
+      </div>
+      <div id="patient-chat-history" style="flex:1;overflow-y:auto;background:#f8fafc;padding:14px;border-radius:12px;border:1px solid #e2e8f0;display:flex;flex-direction:column;gap:10px;margin-bottom:12px;">
+        <div style="text-align:center;color:#94a3b8;font-size:0.85rem;margin-top:40px;">Đang kết nối phòng chat an toàn...</div>
+      </div>
+      <form id="patient-chat-form" style="display:flex;gap:10px;">
+        <input id="patient-chat-input" placeholder="Nhập tin nhắn..." required style="flex:1;padding:10px 14px;border:1px solid #cbd5e1;border-radius:8px;font-size:0.9rem;" autocomplete="off">
+        <button class="button" type="submit" style="background:#2563eb;padding:10px 18px;">Gửi</button>
+      </form>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+  <script src="/notifications.js"></script>
+  <script src="/user-workspace.js?v=6.0"></script>
+  <script src="/chatbot.js"></script>
+</body>
+</html>

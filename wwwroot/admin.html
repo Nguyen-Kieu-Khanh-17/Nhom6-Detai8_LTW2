@@ -1,0 +1,852 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Trung tâm quản trị | Medika Clinic</title>
+  <link rel="stylesheet" href="/role.css?v=6.0">
+  <link rel="stylesheet" href="/chatbot.css?v=6.0">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    /* METRIC CARDS */
+    .metric-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 18px;
+      margin-bottom: 24px;
+    }
+    .metric-card {
+      background: #ffffff;
+      border-radius: 14px;
+      padding: 20px 22px;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+      transition: all 0.2s ease;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .metric-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(0,0,0,0.06);
+      border-color: #cbd5e1;
+    }
+    .metric-label {
+      font-size: 0.78rem;
+      color: #64748b;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .metric-num {
+      font-family: 'Outfit', sans-serif;
+      font-size: 2.2rem;
+      font-weight: 800;
+      color: #0f172a;
+      line-height: 1.1;
+      margin: 8px 0 4px;
+    }
+    .metric-trend {
+      font-size: 0.8rem;
+      color: #94a3b8;
+      font-weight: 500;
+    }
+    .metric-icon-box {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .metric-icon-blue { background: #eff6ff; color: #2563eb; }
+    .metric-icon-purple { background: #eef2ff; color: #4f46e5; }
+    .metric-icon-amber { background: #fffbeb; color: #f59e0b; }
+    .metric-icon-emerald { background: #ecfdf5; color: #10b981; }
+
+    /* EXECUTIVE OPERATIONS PIPELINE */
+    .ops-pipeline-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 14px;
+    }
+    .ops-pipeline-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 18px;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      position: relative;
+      overflow: hidden;
+    }
+    .ops-pipeline-item:hover {
+      transform: translateX(4px);
+      border-color: #cbd5e1;
+      box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);
+      background: #fafafa;
+    }
+    .ops-pipeline-item::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 5px;
+    }
+    .ops-pipeline-item.amber::before { background: #f59e0b; }
+    .ops-pipeline-item.blue::before { background: #0284c7; }
+    .ops-pipeline-item.indigo::before { background: #4f46e5; }
+    .ops-pipeline-item.emerald::before { background: #10b981; }
+    .ops-pipeline-item.rose::before { background: #ef4444; }
+
+    .ops-pipeline-left {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .ops-pipeline-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.15rem;
+      flex-shrink: 0;
+    }
+    .ops-pipeline-item.amber .ops-pipeline-icon { background: #fffbeb; color: #b45309; }
+    .ops-pipeline-item.blue .ops-pipeline-icon { background: #eff6ff; color: #0284c7; }
+    .ops-pipeline-item.indigo .ops-pipeline-icon { background: #eef2ff; color: #4f46e5; }
+    .ops-pipeline-item.emerald .ops-pipeline-icon { background: #ecfdf5; color: #059669; }
+    .ops-pipeline-item.rose .ops-pipeline-icon { background: #fef2f2; color: #dc2626; }
+
+    .ops-pipeline-text strong {
+      display: block;
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #0f172a;
+      margin-bottom: 2px;
+    }
+    .ops-pipeline-text small {
+      display: block;
+      font-size: 0.8rem;
+      color: #64748b;
+    }
+    .ops-pipeline-badge {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.35rem;
+      font-weight: 800;
+      padding: 4px 16px;
+      border-radius: 10px;
+      min-width: 52px;
+      text-align: center;
+      display: inline-block;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+    }
+    .ops-pipeline-item.amber .ops-pipeline-badge { background: #fffbeb; color: #b45309; border: 1px solid #fde68a; }
+    .ops-pipeline-item.blue .ops-pipeline-badge { background: #eff6ff; color: #0284c7; border: 1px solid #bfdbfe; }
+    .ops-pipeline-item.indigo .ops-pipeline-badge { background: #eef2ff; color: #4f46e5; border: 1px solid #c7d2fe; }
+    .ops-pipeline-item.emerald .ops-pipeline-badge { background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; }
+    .ops-pipeline-item.rose .ops-pipeline-badge { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+
+    /* QUICK ACTIONS */
+    .quick-actions-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin-top: 14px;
+    }
+    .quick-action-card {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      padding: 16px;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      cursor: pointer;
+      text-align: left;
+      transition: all 0.2s ease;
+      width: 100%;
+    }
+    .quick-action-card:hover {
+      transform: translateY(-2px);
+      border-color: #2563eb;
+      box-shadow: 0 8px 18px -4px rgba(37, 99, 235, 0.12);
+    }
+    .quick-action-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      flex-shrink: 0;
+    }
+    .quick-action-icon.blue { background: #eff6ff; color: #2563eb; }
+    .quick-action-icon.rose { background: #fef2f2; color: #ef4444; }
+    .quick-action-icon.indigo { background: #eef2ff; color: #4f46e5; }
+    .quick-action-icon.emerald { background: #ecfdf5; color: #10b981; }
+    .quick-action-text strong {
+      display: block;
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #0f172a;
+      margin-bottom: 2px;
+    }
+    .quick-action-text small {
+      display: block;
+      font-size: 0.8rem;
+      color: #64748b;
+      line-height: 1.35;
+    }
+
+    .nav a.nav-tab {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+    }
+    .tab-section {
+      display: none;
+    }
+    .tab-section.active {
+      display: block;
+    }
+    .table-wrap {
+      background: #fff;
+      border-radius: 12px;
+      border: 1px solid #e2e8f0;
+      overflow-x: auto;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.9rem;
+    }
+    th, td {
+      padding: 14px 16px;
+      border-bottom: 1px solid #f1f5f9;
+      vertical-align: middle;
+    }
+    th {
+      background: #f8fafc;
+      font-weight: 700;
+      color: #475569;
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    /* ACTION BUTTONS */
+    .btn-action-sm {
+      padding: 5px 10px;
+      border-radius: 6px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.15s ease;
+    }
+    .btn-lock { background: #fef2f2; color: #ef4444; border: 1px solid #fecaca; }
+    .btn-unlock { background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; }
+    .btn-reset { background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; }
+    .btn-delete { background: #fee2e2; color: #991b1b; }
+    .btn-resched { background: #fff7ed; color: #ea580c; border: 1px solid #fed7aa; }
+
+    /* MODAL */
+    .modal-backdrop {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(15, 23, 42, 0.6);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9998;
+    }
+    .modal-box {
+      background: #fff;
+      border-radius: 16px;
+      width: 520px;
+      max-width: 90vw;
+      padding: 26px;
+      box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+      border: 1px solid #e2e8f0;
+      animation: modalFade 0.2s ease-out;
+    }
+    @keyframes modalFade {
+      from { opacity: 0; transform: scale(0.96) translateY(8px); }
+      to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 18px;
+    }
+    .modal-header h3 { margin: 0; font-size: 1.25rem; font-weight: 700; color: #0f172a; }
+    .modal-close {
+      background: #f1f5f9; border: none; width: 32px; height: 32px; border-radius: 50%;
+      cursor: pointer; color: #64748b; display: flex; align-items: center; justify-content: center;
+    }
+    .modal-close:hover { background: #fee2e2; color: #ef4444; }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <aside class="rail">
+      <div class="brand"><span class="brand-mark">+</span> medika</div>
+      <p>TRUNG TÂM QUẢN TRỊ<br>Kiểm soát toàn diện hệ thống phòng khám.</p>
+      <nav class="nav">
+        <a id="tab-btn-dashboard" class="nav-tab active" onclick="switchAdminTab('dashboard')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+          Tổng quan hệ thống
+        </a>
+        <a id="tab-btn-users" class="nav-tab" onclick="switchAdminTab('users')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+          Tài khoản & Phân quyền
+        </a>
+        <a id="tab-btn-doctors" class="nav-tab" onclick="switchAdminTab('doctors')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg>
+          Quản lý Bác sĩ
+        </a>
+        <a id="tab-btn-appointments" class="nav-tab" onclick="switchAdminTab('appointments')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+          Quản lý Lịch khám
+        </a>
+        <a id="tab-btn-leaves" class="nav-tab" onclick="switchAdminTab('leaves')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+          Phê duyệt Xin nghỉ
+        </a>
+        <a id="tab-btn-reviews" class="nav-tab" onclick="switchAdminTab('reviews')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+          Đánh giá Bệnh nhân
+        </a>
+        <a id="tab-btn-audit" class="nav-tab" onclick="switchAdminTab('audit')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+          Nhật ký Audit Log
+        </a>
+        <a id="tab-btn-gemini" class="nav-tab" onclick="switchAdminTab('gemini')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83"></path></svg>
+          Cấu hình Gemini AI
+        </a>
+        <hr style="border:none;border-top:1px solid rgba(255,255,255,0.15);margin:12px 0;">
+        <a href="/index.html">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
+          Bàn làm việc Lễ tân
+        </a>
+        <a href="/support.html">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+          Hộp thư CSKH
+        </a>
+      </nav>
+      <div class="rail-bottom">Quyền quản trị cấp cao nhất</div>
+    </aside>
+
+    <main class="main">
+      <header class="top">
+        <div>
+          <h1 id="page-title">Kiểm soát & Thống kê hệ thống</h1>
+          <p id="welcome">Đang tải...</p>
+        </div>
+        <button id="logout" class="logout">Đăng xuất</button>
+      </header>
+
+      <!-- TAB 1: DASHBOARD TỔNG QUAN -->
+      <section id="sec-dashboard" class="tab-section active">
+        <div class="metric-grid">
+          <div class="metric-card">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <span class="metric-label">Tổng bệnh nhân</span>
+              <div class="metric-icon-box metric-icon-blue">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg>
+              </div>
+            </div>
+            <div class="metric-num" id="total-patients">-</div>
+            <div class="metric-trend">Hồ sơ đã lưu trên hệ thống</div>
+          </div>
+
+          <div class="metric-card">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <span class="metric-label">Tổng bác sĩ</span>
+              <div class="metric-icon-box metric-icon-purple">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg>
+              </div>
+            </div>
+            <div class="metric-num" id="total-doctors">-</div>
+            <div class="metric-trend">Đội ngũ y bác sĩ đang công tác</div>
+          </div>
+
+          <div class="metric-card">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <span class="metric-label">Lịch hẹn hôm nay</span>
+              <div class="metric-icon-box metric-icon-amber">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+              </div>
+            </div>
+            <div class="metric-num" id="today-appts">-</div>
+            <div class="metric-trend">Tổng số lượt đăng ký khám</div>
+          </div>
+
+          <div class="metric-card">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <span class="metric-label">Ca khám hoàn thành</span>
+              <div class="metric-icon-box metric-icon-emerald">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+              </div>
+            </div>
+            <div class="metric-num" id="total-completed" style="color:#059669;">-</div>
+            <div class="metric-trend" style="color:#059669;">Đã hoàn tất hồ sơ & đơn thuốc</div>
+          </div>
+        </div>
+
+        <!-- BIỂU ĐỒ CHART.JS & NÚT XUẤT BÁO CÁO -->
+        <article class="card full" style="margin-bottom:24px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+            <div>
+              <h2 style="margin:0;">📈 Biểu đồ số lượt khám 7 ngày gần nhất</h2>
+              <small style="color:#64748b;">Thống kê tổng số ca hẹn, ca khám hoàn thành và ca hủy trong tuần</small>
+            </div>
+            <div style="display:flex;gap:10px;">
+              <a href="/api/reports/export-appointments" class="button" style="background:#0284c7;text-decoration:none;font-size:0.85rem;padding:8px 14px;border-radius:8px;">
+                📥 Xuất Lịch Khám (CSV/Excel)
+              </a>
+              <a href="/api/reports/export-patients" class="button" style="background:#059669;text-decoration:none;font-size:0.85rem;padding:8px 14px;border-radius:8px;">
+                📥 Xuất Bệnh Nhân (CSV/Excel)
+              </a>
+            </div>
+          </div>
+          <div style="height:260px;width:100%;">
+            <canvas id="appointmentsChart"></canvas>
+          </div>
+        </article>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;">
+          <!-- TÌNH TRẠNG CA KHÁM TRONG NGÀY -->
+          <article class="card">
+            <h2>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+              Tình trạng ca khám trong ngày
+            </h2>
+            <div class="ops-pipeline-list">
+              <div class="ops-pipeline-item amber">
+                <div class="ops-pipeline-left">
+                  <div class="ops-pipeline-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                  </div>
+                  <div class="ops-pipeline-text">
+                    <strong>Chờ tiếp nhận & duyệt</strong>
+                    <small>Lịch hẹn mới đăng ký, chờ Lễ tân xác nhận</small>
+                  </div>
+                </div>
+                <span class="ops-pipeline-badge" id="dash-pending">0</span>
+              </div>
+
+              <div class="ops-pipeline-item blue">
+                <div class="ops-pipeline-left">
+                  <div class="ops-pipeline-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                  </div>
+                  <div class="ops-pipeline-text">
+                    <strong>Đã xác nhận lịch</strong>
+                    <small>Lễ tân đã duyệt và phân bổ phòng khám</small>
+                  </div>
+                </div>
+                <span class="ops-pipeline-badge" id="dash-confirmed">0</span>
+              </div>
+
+              <div class="ops-pipeline-item indigo">
+                <div class="ops-pipeline-left">
+                  <div class="ops-pipeline-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                  </div>
+                  <div class="ops-pipeline-text">
+                    <strong>Bệnh nhân đã Check-in</strong>
+                    <small>Đã đến quầy, xếp số & đang chờ Bác sĩ gọi</small>
+                  </div>
+                </div>
+                <span class="ops-pipeline-badge" id="dash-checkedin">0</span>
+              </div>
+
+              <div class="ops-pipeline-item emerald">
+                <div class="ops-pipeline-left">
+                  <div class="ops-pipeline-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                  </div>
+                  <div class="ops-pipeline-text">
+                    <strong>Ca khám đã hoàn thành</strong>
+                    <small>Bác sĩ đã kết luận, lưu bệnh án & kê đơn</small>
+                  </div>
+                </div>
+                <span class="ops-pipeline-badge" id="dash-completed">0</span>
+              </div>
+
+              <div class="ops-pipeline-item rose">
+                <div class="ops-pipeline-left">
+                  <div class="ops-pipeline-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+                  </div>
+                  <div class="ops-pipeline-text">
+                    <strong>Lịch hẹn bị hủy / từ chối</strong>
+                    <small>Hủy lịch hẹn hoặc từ chối do lịch bác sĩ đổi</small>
+                  </div>
+                </div>
+                <span class="ops-pipeline-badge" id="dash-cancelled">0</span>
+              </div>
+            </div>
+          </article>
+
+          <!-- LỐI TẮT QUẢN TRỊ DẠNG THẺ -->
+          <article class="card">
+            <h2>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+              Lối tắt quản trị nhanh
+            </h2>
+            <div class="quick-actions-grid">
+              <button class="quick-action-card" type="button" onclick="switchAdminTab('users')">
+                <div class="quick-action-icon emerald">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                </div>
+                <div class="quick-action-text">
+                  <strong>Thêm & Quản lý User</strong>
+                  <small>Thêm người dùng, khóa & reset mật khẩu</small>
+                </div>
+              </button>
+
+              <button class="quick-action-card" type="button" onclick="switchAdminTab('appointments')">
+                <div class="quick-action-icon blue">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                </div>
+                <div class="quick-action-text">
+                  <strong>Điều phối Lịch khám</strong>
+                  <small>Đổi bác sĩ, đổi giờ khám & đổi phòng</small>
+                </div>
+              </button>
+
+              <button class="quick-action-card" type="button" onclick="switchAdminTab('leaves')">
+                <div class="quick-action-icon rose">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                </div>
+                <div class="quick-action-text">
+                  <strong>Phê duyệt Xin nghỉ</strong>
+                  <small>Duyệt đơn nghỉ & tự động đổi lịch</small>
+                </div>
+              </button>
+
+              <button class="quick-action-card" type="button" onclick="switchAdminTab('audit')">
+                <div class="quick-action-icon indigo">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                </div>
+                <div class="quick-action-text">
+                  <strong>Nhật ký Audit Log</strong>
+                  <small>Xem lịch sử thao tác của các vai trò</small>
+                </div>
+              </button>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <!-- TAB 2: TÀI KHOẢN & PHÂN QUYỀN -->
+      <section id="sec-users" class="tab-section">
+        <article class="card full">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+            <div>
+              <h2 style="margin:0;">👥 Quản trị Tài khoản & Phân quyền</h2>
+              <small style="color:#64748b;">Thêm tài khoản mới, phân quyền (Role), khóa/mở khóa tài khoản hoặc reset mật khẩu.</small>
+            </div>
+            <button class="button" style="background:#2563eb;font-size:0.85rem;padding:8px 16px;" onclick="openCreateUserModal()">
+              ＋ Thêm Người dùng Mới
+            </button>
+          </div>
+          <div id="users-table-container" class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>TÀI KHOẢN</th>
+                  <th>EMAIL</th>
+                  <th>VAI TRÒ (ROLE)</th>
+                  <th>TRẠNG THÁI</th>
+                  <th>NGÀY TẠO</th>
+                  <th>THAO TÁC</th>
+                </tr>
+              </thead>
+              <tbody id="users-table-body">
+                <tr><td colspan="6" style="text-align:center;">Đang tải danh sách tài khoản...</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p id="message" class="message" style="margin-top:10px;"></p>
+        </article>
+      </section>
+
+      <!-- TAB 3: QUẢN LÝ BÁC SĨ -->
+      <section id="sec-doctors" class="tab-section">
+        <div style="display:grid;grid-template-columns:1fr 1.3fr;gap:20px;">
+          <article class="card">
+            <h2>➕ Thêm Bác sĩ mới</h2>
+            <form id="add-doctor-form" class="form">
+              <label>Họ và tên Bác sĩ
+                <input id="new-doc-name" required placeholder="BS. CKI Nguyễn Văn A">
+              </label>
+              <label>Chuyên khoa
+                <input id="new-doc-specialty" required placeholder="Tim mạch / Nhi / Da liễu...">
+              </label>
+              <label>Học vị / Bằng cấp
+                <input id="new-doc-degree" required placeholder="BS. CKI / ThS. BS / Tiến sĩ">
+              </label>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                <label>Phòng khám
+                  <input id="new-doc-room" required placeholder="P.101">
+                </label>
+                <label>Năm kinh nghiệm
+                  <input id="new-doc-exp" type="number" value="5" min="1" required>
+                </label>
+              </div>
+              <label>Số điện thoại
+                <input id="new-doc-phone" required placeholder="0901234567">
+              </label>
+              <button class="button" type="submit" style="background:#059669;margin-top:10px;">+ Thêm bác sĩ vào hệ thống</button>
+              <p id="add-doc-message" class="message"></p>
+            </form>
+          </article>
+
+          <article class="card">
+            <h2>👨‍⚕️ Danh sách Bác sĩ phòng khám</h2>
+            <div id="doctors-list-container" class="list">
+              <p class="label">Đang tải danh sách bác sĩ...</p>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <!-- TAB 4: QUẢN LÝ LỊCH KHÁM -->
+      <section id="sec-appointments" class="tab-section">
+        <article class="card full">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+            <div>
+              <h2 style="margin:0;">📅 Quản lý & Điều phối Lịch khám toàn phòng khám</h2>
+              <small style="color:#64748b;">Xem danh sách, đổi bác sĩ, đổi giờ khám hoặc hủy lịch hẹn khi có thay đổi.</small>
+            </div>
+            <select id="admin-appt-status-filter" onchange="loadAdminAppointments()" style="padding:8px 14px;border-radius:8px;border:1px solid #cbd5e1;font-size:0.85rem;">
+              <option value="">-- Tất cả trạng thái --</option>
+              <option value="Pending">Chờ duyệt (Pending)</option>
+              <option value="Confirmed">Đã xác nhận (Confirmed)</option>
+              <option value="CheckedIn">Đã Check-in (CheckedIn)</option>
+              <option value="Completed">Hoàn thành (Completed)</option>
+              <option value="NeedReschedule">Cần đổi lịch (NeedReschedule)</option>
+              <option value="Cancelled">Đã hủy (Cancelled)</option>
+            </select>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>MÃ LỊCH</th>
+                  <th>BỆNH NHÂN</th>
+                  <th>BÁC SĨ</th>
+                  <th>THỜI GIAN</th>
+                  <th>LÝ DO KHÁM</th>
+                  <th>TRẠNG THÁI</th>
+                  <th>THAO TÁC ĐIỀU PHỐI</th>
+                </tr>
+              </thead>
+              <tbody id="admin-appointments-tbody">
+                <tr><td colspan="7" style="text-align:center;">Đang tải danh sách lịch khám...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </article>
+      </section>
+
+      <!-- TAB 5: PHÊ DUYỆT XIN NGHỈ BÁC SĨ -->
+      <section id="sec-leaves" class="tab-section">
+        <article class="card full">
+          <h2>📋 Phê duyệt yêu cầu xin nghỉ / Đổi ca của Bác sĩ</h2>
+          <p class="label">Khi chấp thuận đơn xin nghỉ, hệ thống sẽ tự động quét các lịch hẹn bị ảnh hưởng và gửi thông báo yêu cầu đổi lịch đến bệnh nhân.</p>
+          <p id="leave-admin-message" class="message" style="margin-bottom:10px;"></p>
+          <div id="leave-requests" class="list">
+            <p class="label">Đang tải danh sách chờ duyệt...</p>
+          </div>
+        </article>
+      </section>
+
+      <!-- TAB 6: ĐÁNH GIÁ CỦA BỆNH NHÂN -->
+      <section id="sec-reviews" class="tab-section">
+        <article class="card full">
+          <h2>⭐ Quản lý Đánh giá & Nhận xét của Bệnh nhân</h2>
+          <p class="label">Kiểm duyệt các phản hồi từ bệnh nhân sau khi hoàn thành khám. Có thể ẩn hoặc xóa nhận xét vi phạm.</p>
+          <div id="reviews-list" class="list" style="margin-top:14px;">
+            <p class="label">Đang tải danh sách đánh giá...</p>
+          </div>
+        </article>
+      </section>
+
+      <!-- TAB 7: NHẬT KÝ AUDIT LOG -->
+      <section id="sec-audit" class="tab-section">
+        <article class="card full">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+            <div>
+              <h2 style="margin:0;">📜 Nhật ký Hệ thống (Audit Log)</h2>
+              <small style="color:#64748b;">Theo dõi toàn bộ vết thay đổi quan trọng trong hệ thống để bảo đảm an toàn dữ liệu y tế.</small>
+            </div>
+            <button class="button" style="background:#475569;font-size:0.85rem;padding:6px 14px;" onclick="loadAuditLogs()">Làm mới</button>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>THỜI GIAN</th>
+                  <th>HÀNH ĐỘNG</th>
+                  <th>NGƯỜI THỰC HIỆN</th>
+                  <th>VAI TRÒ</th>
+                  <th>CHI TIẾT</th>
+                </tr>
+              </thead>
+              <tbody id="audit-table-body">
+                <tr><td colspan="5" style="text-align:center;">Đang tải nhật ký hệ thống...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </article>
+      </section>
+
+      <!-- TAB 8: CẤU HÌNH GEMINI AI CHATBOT -->
+      <section id="sec-gemini" class="tab-section">
+        <article class="card full" style="border: 2px solid #3b82f6;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+            <div>
+              <h2 style="margin:0;color:#1e40af;">🤖 Cấu hình & Liên kết Google Gemini AI Chatbot</h2>
+              <small style="color:#64748b;">Tích hợp trí tuệ nhân tạo Google Gemini giúp tư vấn sức khỏe chuẩn y khoa và tự động điều hướng chuyên khoa.</small>
+            </div>
+            <span id="gemini-status-badge" style="padding:6px 12px;border-radius:20px;font-size:0.85rem;font-weight:600;background:#e2e8f0;color:#475569;">Đang kiểm tra...</span>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;">
+            <form id="gemini-config-form" class="form">
+              <label>Google Gemini API Key
+                <input id="gemini-api-key" type="password" placeholder="Nhập khóa API (ví dụ: AIzaSy...)" autocomplete="off">
+                <small style="color:#64748b;">Khóa API bảo mật lấy từ <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color:#2563eb;text-decoration:underline;">Google AI Studio</a>. Để trống nếu muốn dùng bộ dữ liệu nội bộ Medika.</small>
+              </label>
+
+              <label>Model Gemini AI
+                <select id="gemini-model">
+                  <option value="gemini-1.5-flash" selected>gemini-1.5-flash (Nhanh & Tối ưu nhất)</option>
+                  <option value="gemini-2.0-flash">gemini-2.0-flash (Thế hệ mới)</option>
+                  <option value="gemini-1.5-pro">gemini-1.5-pro (Mô hình suy luận sâu)</option>
+                </select>
+              </label>
+
+              <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+                <input id="gemini-enabled" type="checkbox" checked style="width:auto;margin:0;">
+                <span style="font-weight:600;color:#1e293b;">Kích hoạt Google Gemini AI cho Chatbot</span>
+              </label>
+
+              <div style="display:flex;gap:10px;margin-top:10px;">
+                <button class="button" type="submit" style="background:#2563eb;">💾 Lưu cấu hình</button>
+                <button class="button" id="btn-test-gemini" type="button" style="background:#059669;">⚡ Kiểm tra kết nối</button>
+              </div>
+              <p id="gemini-config-message" class="message"></p>
+            </form>
+
+            <div style="background:#f8fafc;padding:16px;border-radius:8px;border:1px solid #e2e8f0;display:flex;flex-direction:column;">
+              <h3 style="margin-top:0;font-size:0.95rem;color:#1e293b;">🧪 Khung thử nghiệm Chatbot AI (Admin Test)</h3>
+              <div id="admin-chat-preview" style="flex:1;min-height:160px;max-height:220px;overflow-y:auto;background:#fff;border:1px solid #cbd5e1;border-radius:6px;padding:10px;font-size:0.88rem;margin-bottom:10px;">
+                <div style="color:#64748b;font-style:italic;">Admin có thể gõ câu hỏi test bên dưới để kiểm tra phản hồi từ AI...</div>
+              </div>
+              <div style="display:flex;gap:8px;">
+                <input id="admin-test-query" placeholder="Gõ câu hỏi test y tế..." style="flex:1;padding:8px;border:1px solid #cbd5e1;border-radius:6px;font-size:0.88rem;">
+                <button class="button" id="admin-test-send-btn" type="button" style="padding:8px 16px;background:#4f46e5;font-size:0.88rem;">Gửi</button>
+              </div>
+            </div>
+          </div>
+        </article>
+      </section>
+    </main>
+  </div>
+
+  <!-- MODAL: TẠO USER MỚI -->
+  <div id="modal-create-user" class="modal-backdrop" style="display:none;">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3>➕ Thêm Tài khoản Người dùng Mới</h3>
+        <button class="modal-close" onclick="closeCreateUserModal()">✕</button>
+      </div>
+      <form id="create-user-form" class="form">
+        <label>Họ và tên
+          <input id="modal-user-fullname" required placeholder="Ví dụ: Nguyễn Văn A">
+        </label>
+        <label>Tên đăng nhập (Username)
+          <input id="modal-user-username" required placeholder="Ví dụ: nguyenvana">
+        </label>
+        <label>Email
+          <input id="modal-user-email" type="email" placeholder="email@medika.local">
+        </label>
+        <label>Mật khẩu khởi tạo
+          <input id="modal-user-password" type="password" required value="123456" placeholder="Mặc định: 123456">
+        </label>
+        <label>Vai trò (Role)
+          <select id="modal-user-role" required>
+            <option value="User">User (Bệnh nhân)</option>
+            <option value="Doctor">Doctor (Bác sĩ)</option>
+            <option value="Receptionist">Receptionist (Lễ tân)</option>
+            <option value="Support">Support (CSKH)</option>
+            <option value="Admin">Admin (Quản trị viên)</option>
+          </select>
+        </label>
+        <div style="display:flex;gap:10px;margin-top:16px;">
+          <button class="button" type="submit" style="background:#2563eb;flex:1;">Tạo tài khoản</button>
+          <button class="button alt" type="button" onclick="closeCreateUserModal()">Hủy</button>
+        </div>
+        <p id="modal-user-msg" class="message" style="margin-top:8px;"></p>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: ĐỔI LỊCH KHÁM (ADMIN RESCHEDULE) -->
+  <div id="modal-admin-reschedule" class="modal-backdrop" style="display:none;">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3>🗓️ Điều phối / Đổi Lịch khám</h3>
+        <button class="modal-close" onclick="closeAdminRescheduleModal()">✕</button>
+      </div>
+      <form id="admin-reschedule-form" class="form">
+        <input type="hidden" id="admin-resched-id">
+        <p id="admin-resched-info" style="background:#f8fafc;padding:10px;border-radius:8px;border:1px solid #e2e8f0;font-size:0.88rem;color:#334155;margin-bottom:12px;"></p>
+        <label>Chọn Bác sĩ mới (hoặc giữ nguyên)
+          <select id="admin-resched-doctor" required></select>
+        </label>
+        <label>Ngày & Giờ khám mới
+          <input id="admin-resched-datetime" type="datetime-local" required>
+        </label>
+        <label>Lý do điều phối
+          <textarea id="admin-resched-reason" placeholder="Điều phối lại giờ khám theo yêu cầu..."></textarea>
+        </label>
+        <div style="display:flex;gap:10px;margin-top:16px;">
+          <button class="button" type="submit" style="background:#ea580c;flex:1;">Xác nhận đổi lịch</button>
+          <button class="button alt" type="button" onclick="closeAdminRescheduleModal()">Đóng</button>
+        </div>
+        <p id="admin-resched-msg" class="message" style="margin-top:8px;"></p>
+      </form>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+  <script src="/notifications.js"></script>
+  <script src="/admin-workspace.js?v=6.0"></script>
+  <script src="/chatbot.js"></script>
+</body>
+</html>

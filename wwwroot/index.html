@@ -1,0 +1,320 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Medika | Quản lý lễ tân & Tiếp nhận</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles.css?v=6.0">
+  <link rel="stylesheet" href="/chatbot.css?v=6.0">
+  <style>
+    .badge-status { padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: 600; display: inline-block; }
+    .badge-pending { background: #fef3c7; color: #92400e; }
+    .badge-confirmed { background: #dbeafe; color: #1e40af; }
+    .badge-checkedin { background: #e0e7ff; color: #3730a3; font-weight: bold; }
+    .badge-completed { background: #d1fae5; color: #065f46; }
+    .badge-cancelled { background: #fee2e2; color: #991b1b; }
+    .btn-action { padding: 4px 10px; border-radius: 4px; font-size: 0.8rem; border: none; cursor: pointer; font-weight: 600; margin-right: 4px; }
+    .btn-confirm { background: #2563eb; color: #fff; }
+    .btn-confirm:hover { background: #1d4ed8; }
+    .btn-checkin { background: #4f46e5; color: #fff; }
+    .btn-checkin:hover { background: #4338ca; }
+    .btn-delete { background: #ef4444; color: #fff; }
+    .btn-delete:hover { background: #dc2626; }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand"><span class="brand-mark">+</span><span>medika</span></div>
+      <p class="eyebrow">QUẢN LÝ PHÒNG KHÁM</p>
+      <nav>
+        <a class="nav-item active" href="#appointments-section">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+          Lịch hẹn & Tiếp nhận
+        </a>
+        <a class="nav-item" href="#patients-section">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg>
+          Hồ sơ Bệnh nhân
+        </a>
+        <a class="nav-item" href="/support.html">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+          Hỗ trợ khách hàng
+        </a>
+        <hr style="border:none;border-top:1px solid rgba(255,255,255,0.1);margin:8px 0;">
+        <a class="nav-item" href="/admin.html">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+          Trung tâm Quản trị
+        </a>
+        <a class="nav-item" href="/doctor.html">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg>
+          Bàn khám Bác sĩ
+        </a>
+      </nav>
+      <div class="sidebar-bottom">
+        <div class="support-card"><span class="support-dot"></span><div><strong>Hỗ trợ trực tuyến</strong><small>Đang hoạt động</small></div></div>
+        <div class="profile"><div class="avatar">LT</div><div><strong id="profile-name">Lễ tân</strong><small>Quầy tiếp đón</small></div></div>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <header class="topbar">
+        <div class="mobile-brand"><span class="brand-mark">+</span> medika</div>
+        <div class="date-label" id="current-date-label"></div>
+        <div class="top-actions">
+          <button class="avatar small" id="logout-button" title="Đăng xuất">LT</button>
+        </div>
+      </header>
+
+      <section class="content">
+        <div class="page-heading">
+          <div>
+            <p class="kicker">TỔNG QUAN PHÒNG KHÁM</p>
+            <h1>Bàn làm việc Lễ tân <span>✦</span></h1>
+            <p class="subtitle">Tiếp nhận bệnh nhân tại quầy & Quản lý duyệt lịch hẹn.</p>
+          </div>
+          <div style="display:flex;gap:10px;">
+            <button class="primary-button" id="open-book-desk" style="background:#2563eb;"><span>＋</span> Đặt lịch tại quầy</button>
+            <button class="primary-button" id="open-add"><span>＋</span> Thêm bệnh nhân</button>
+          </div>
+        </div>
+
+        <div class="stats-grid">
+          <article class="stat-card coral">
+            <div class="stat-top"><span>Tổng bệnh nhân</span><span class="stat-icon">♙</span></div>
+            <strong id="total-count">0</strong>
+            <small>Hồ sơ đã đăng ký</small>
+          </article>
+          <article class="stat-card mint">
+            <div class="stat-top"><span>Chờ lễ tân duyệt</span><span class="stat-icon">⏳</span></div>
+            <strong id="pending-count">0</strong>
+            <small>Lịch hẹn mới</small>
+          </article>
+          <article class="stat-card cream">
+            <div class="stat-top"><span>Đã Check-in xếp số</span><span class="stat-icon">🏥</span></div>
+            <strong id="checkedin-count">0</strong>
+            <small>Đang chờ bác sĩ gọi</small>
+          </article>
+          <article class="stat-card lilac">
+            <div class="stat-top"><span>Đã hoàn thành khám</span><span class="stat-icon">★</span></div>
+            <strong id="completed-count">0</strong>
+            <small>Trong ngày</small>
+          </article>
+        </div>
+
+        <!-- SECTION: QUẢN LÝ LỊCH HẸN & TIẾP NHẬN -->
+        <div class="section-heading" id="appointments-section">
+          <div>
+            <p class="kicker">TIẾP NHẬN & XẾP SỐ KHÁM</p>
+            <h2>Danh sách Lịch hẹn & Bệnh nhân đến quầy</h2>
+          </div>
+          <div class="table-tools">
+            <select id="appointment-status-filter" style="padding:6px 12px;border-radius:6px;border:1px solid #cbd5e1;">
+              <option value="">-- Tất cả trạng thái --</option>
+              <option value="Pending">Chờ duyệt (Pending)</option>
+              <option value="Confirmed">Đã duyệt (Confirmed)</option>
+              <option value="CheckedIn">Đã Check-in xếp số (CheckedIn)</option>
+              <option value="Completed">Đã khám xong (Completed)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>STT KHÁM</th>
+                <th>BỆNH NHÂN</th>
+                <th>BÁC SĨ</th>
+                <th>THỜI GIAN KHÁM</th>
+                <th>LÝ DO KHÁM</th>
+                <th>TRẠNG THÁI</th>
+                <th>THAO TÁC LỄ TÂN</th>
+              </tr>
+            </thead>
+            <tbody id="appointment-table">
+              <tr><td colspan="7" class="empty">Đang tải danh sách lịch hẹn...</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <br><hr style="border:none;border-top:1px solid #e2e8f0;margin:24px 0;"><br>
+
+        <!-- SECTION: DANH SÁCH BỆNH NHÂN -->
+        <div class="section-heading" id="patients-section">
+          <div>
+            <p class="kicker">HỒ SƠ BỆNH NHÂN</p>
+            <h2>Danh sách bệnh nhân trong hệ thống</h2>
+          </div>
+          <div class="table-tools">
+            <label class="search"><span>⌕</span><input id="search-input" type="search" placeholder="Tìm theo tên, số điện thoại..."></label>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>BỆNH NHÂN</th>
+                <th>NGÀY SINH</th>
+                <th>LIÊN HỆ</th>
+                <th>ĐỊA CHỈ</th>
+                <th>TIỀN SỬ BỆNH</th>
+                <th>THAO TÁC</th>
+              </tr>
+            </thead>
+            <tbody id="patient-table">
+              <tr><td colspan="6" class="empty">Đang tải hồ sơ...</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="table-footer" id="result-count"></p>
+      </section>
+    </main>
+  </div>
+
+  <div class="modal hidden" id="patient-modal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div><p class="kicker">HỒ SƠ BỆNH NHÂN</p><h2 id="modal-title">Thêm bệnh nhân</h2></div>
+        <button class="close-button" id="close-modal">×</button>
+      </div>
+      <form id="patient-form">
+        <input type="hidden" id="patient-id">
+        <div class="form-grid">
+          <label>Họ và tên<input id="full-name" required placeholder="Nguyễn Văn A"></label>
+          <label>Ngày sinh<input id="date-of-birth" type="date" required></label>
+          <label>Số điện thoại<input id="phone" required placeholder="0901234567"></label>
+          <label>Số thẻ BHYT (nếu có)<input id="insurance-number" placeholder="DN479..."></label>
+          <label class="full-width">Địa chỉ<input id="address" required placeholder="Đà Nẵng"></label>
+          <label class="full-width">Tiền sử bệnh<textarea id="medical-history" rows="3" placeholder="Chưa có thông tin"></textarea></label>
+        </div>
+        <div class="form-actions">
+          <button type="button" class="cancel-button" id="cancel-modal">Hủy</button>
+          <button type="submit" class="primary-button">Lưu hồ sơ</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  <!-- MODAL ĐẶT LỊCH TẠI QUẦY -->
+  <div class="modal hidden" id="desk-booking-modal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div><p class="kicker">TIẾP NHẬN BỆNH NHÂN</p><h2>Đặt lịch khám tại quầy Lễ tân</h2></div>
+        <button class="close-button" id="close-desk-booking">×</button>
+      </div>
+      <form id="desk-booking-form">
+        <div class="form-grid">
+          <label class="full-width">Chọn Bệnh nhân
+            <select id="desk-patient-id" required style="width:100%;padding:10px;border-radius:6px;border:1px solid #cbd5e1;">
+              <option value="">-- Chọn bệnh nhân từ danh sách --</option>
+            </select>
+          </label>
+          <label class="full-width">Chọn Bác sĩ chuyên khoa
+            <select id="desk-doctor-id" required style="width:100%;padding:10px;border-radius:6px;border:1px solid #cbd5e1;">
+              <option value="">-- Chọn bác sĩ phụ trách --</option>
+            </select>
+          </label>
+          <label class="full-width">Ngày & Giờ khám
+            <input id="desk-appt-date" type="datetime-local" required>
+          </label>
+          <label class="full-width">Lý do khám / Triệu chứng
+            <input id="desk-reason" required placeholder="Khám tim mạch / Đau bụng / Tái khám...">
+          </label>
+          <label class="full-width" style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+            <input id="desk-auto-checkin" type="checkbox" checked style="width:auto;margin:0;">
+            <span style="font-weight:600;color:#1e293b;">Check-in cấp Số thứ tự (STT) vào phòng khám ngay</span>
+          </label>
+        </div>
+        <div class="form-actions">
+          <button type="button" class="cancel-button" id="cancel-desk-booking">Hủy</button>
+          <button type="submit" class="primary-button" style="background:#2563eb;">Xác nhận tạo lịch</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL ĐỔI LỊCH KHÁM (RESCHEDULE) -->
+  <div class="modal hidden" id="reception-reschedule-modal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div><p class="kicker">THAY ĐỔI LỊCH HẸN</p><h2>Đổi lịch khám cho Bệnh nhân</h2></div>
+        <button class="close-button" id="close-reschedule-modal">×</button>
+      </div>
+      <form id="reception-reschedule-form">
+        <input type="hidden" id="reschedule-appt-id">
+        <div class="form-grid">
+          <label class="full-width">Thông tin lịch hẹn
+            <input id="reschedule-appt-info" readonly style="background:#f1f5f9;">
+          </label>
+          <label class="full-width">Ngày & Giờ khám mới
+            <input id="reschedule-new-date" type="datetime-local" required>
+          </label>
+          <label class="full-width">Lý do đổi lịch
+            <input id="reschedule-reason" required placeholder="Bệnh nhân bận / Yêu cầu chuyển giờ...">
+          </label>
+        </div>
+        <div class="form-actions">
+          <button type="button" class="cancel-button" id="cancel-reschedule-modal">Hủy</button>
+          <button type="submit" class="primary-button" style="background:#f59e0b;">Xác nhận đổi lịch</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL THANH TOÁN VIỆN PHÍ & TẠO HÓA ĐƠN -->
+  <div class="modal hidden" id="invoice-modal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div><p class="kicker">THU NGÂN & THANH TOÁN</p><h2>Hóa đơn Viện phí & Tiền thuốc</h2></div>
+        <button class="close-button" id="close-invoice-modal">×</button>
+      </div>
+      <form id="invoice-form">
+        <input type="hidden" id="invoice-appointment-id">
+        <div class="form-grid">
+          <label class="full-width">Thông tin ca khám
+            <input id="invoice-patient-info" readonly style="background:#f1f5f9;font-weight:600;">
+          </label>
+          <label>Tiền công khám (VNĐ)
+            <input id="invoice-exam-fee" type="number" value="150000" required oninput="calculateInvoiceTotal()">
+          </label>
+          <label>Tiền thuốc & Vật tư (VNĐ)
+            <input id="invoice-med-fee" type="number" value="200000" required oninput="calculateInvoiceTotal()">
+          </label>
+          <label>Giảm trừ BHYT (%)
+            <select id="invoice-discount" onchange="calculateInvoiceTotal()">
+              <option value="0">Không có BHYT (0%)</option>
+              <option value="80">BHYT đúng tuyến (80%)</option>
+              <option value="100">BHYT ưu tiên (100%)</option>
+            </select>
+          </label>
+          <label>Phương thức thanh toán
+            <select id="invoice-method">
+              <option value="Cash">Tiền mặt (Cash)</option>
+              <option value="Transfer">Chuyển khoản QR (Transfer)</option>
+            </select>
+          </label>
+          <div class="full-width" style="background:#f8fafc;padding:12px;border-radius:8px;border:1px solid #cbd5e1;display:flex;justify-content:space-between;align-items:center;">
+            <span style="font-weight:700;color:#0f172a;">TỔNG PHẢI THU:</span>
+            <span id="invoice-total-display" style="font-size:1.4rem;font-weight:800;color:#059669;">350,000 đ</span>
+          </div>
+        </div>
+        <div class="form-actions">
+          <button type="button" class="cancel-button" id="cancel-invoice-modal">Đóng</button>
+          <button type="submit" class="primary-button" style="background:#059669;">✓ Xác nhận đã thanh toán</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+  <script src="/notifications.js"></script>
+  <script src="/app-auth.js"></script>
+  <script src="/app-page-role.js"></script>
+  <script src="/app.js?v=6.0"></script>
+  <script src="/chatbot.js"></script>
+</body>
+</html>
