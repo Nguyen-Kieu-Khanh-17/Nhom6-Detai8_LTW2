@@ -33,8 +33,28 @@ public class AppointmentService : IAppointmentService
 
     public List<Appointment> GetForUser(int userId)
     {
-        return context.Appointments.Where(item => item.UserId == userId).OrderByDescending(item => item.AppointmentDate).ToList();
+        return context.Appointments
+            .Where(item => item.UserId == userId ||
+                context.Patients.Any(patient => patient.UserId == userId && patient.Id == item.PatientId))
+            .OrderByDescending(item => item.AppointmentDate)
+            .ToList();
     }
+
+    public List<Appointment> GetForDoctor(int doctorId, DateTime? date = null, AppointmentStatus? status = null)
+    {
+        var query = context.Appointments.Where(item => item.DoctorId == doctorId);
+        if (date.HasValue)
+            query = query.Where(item => item.AppointmentDate.Date == date.Value.Date);
+        if (status.HasValue)
+            query = query.Where(item => item.Status == status.Value);
+        return query.OrderBy(item => item.AppointmentDate).ToList();
+    }
+
+    public List<Appointment> GetForPatientByDoctor(int patientId, int doctorId) =>
+        context.Appointments
+            .Where(item => item.PatientId == patientId && item.DoctorId == doctorId)
+            .OrderByDescending(item => item.AppointmentDate)
+            .ToList();
 
     public Appointment GetById(int id)
     {
@@ -44,6 +64,10 @@ public class AppointmentService : IAppointmentService
 
     public Appointment Add(Appointment appointment)
     {
+        if (appointment.AppointmentDate <= DateTime.Now)
+            throw new ArgumentException("Thời gian khám phải sau thời điểm hiện tại.");
+        if (string.IsNullOrWhiteSpace(appointment.Reason))
+            throw new ArgumentException("Vui lòng nhập lý do khám.");
         ValidateReferences(appointment);
         EnsureDoctorIsAvailable(appointment);
 
@@ -62,7 +86,6 @@ public class AppointmentService : IAppointmentService
         existingAppointment.DoctorId = appointment.DoctorId;
         existingAppointment.AppointmentDate = appointment.AppointmentDate;
         existingAppointment.Reason = appointment.Reason;
-        existingAppointment.Status = appointment.Status;
         context.SaveChanges();
     }
 
@@ -76,8 +99,10 @@ public class AppointmentService : IAppointmentService
     public void Cancel(int id, int userId)
     {
         var appointment = GetById(id);
-        if (appointment.UserId != userId)
+        if (!GetForUser(userId).Any(item => item.Id == appointment.Id))
             throw new UnauthorizedAccessException("Bạn không có quyền thao tác lịch hẹn này.");
+        if (appointment.Status is not (AppointmentStatus.Pending or AppointmentStatus.Confirmed or AppointmentStatus.NeedReschedule))
+            throw new InvalidOperationException("Chỉ lịch hẹn đang chờ hoặc đã được duyệt mới có thể hủy.");
 
         appointment.Status = AppointmentStatus.Cancelled;
         context.SaveChanges();
@@ -86,6 +111,9 @@ public class AppointmentService : IAppointmentService
     public Appointment Confirm(int id, int? receptionistUserId = null)
     {
         var appointment = GetById(id);
+        if (appointment.Status != AppointmentStatus.Pending)
+            throw new InvalidOperationException("Chỉ lịch hẹn đang chờ mới được duyệt.");
+        EnsureDoctorIsAvailable(appointment, id);
         appointment.Status = AppointmentStatus.Confirmed;
         if (receptionistUserId.HasValue)
             appointment.ReceptionistId = receptionistUserId.Value;
@@ -96,6 +124,8 @@ public class AppointmentService : IAppointmentService
     public Appointment CheckIn(int id, int? receptionistUserId = null)
     {
         var appointment = GetById(id);
+        if (appointment.Status != AppointmentStatus.Confirmed && appointment.Status != AppointmentStatus.Pending)
+            throw new InvalidOperationException("Chỉ lịch hẹn đang chờ hoặc đã được duyệt mới được check-in.");
         appointment.Status = AppointmentStatus.CheckedIn;
         if (receptionistUserId.HasValue)
             appointment.ReceptionistId = receptionistUserId.Value;
@@ -104,9 +134,7 @@ public class AppointmentService : IAppointmentService
         {
             var maxQueue = context.Appointments
                 .Where(a => a.AppointmentDate.Date == appointment.AppointmentDate.Date && a.QueueNumber.HasValue)
-                .Select(a => a.QueueNumber!.Value)
-                .DefaultIfEmpty(0)
-                .Max();
+                .Max(a => (int?)a.QueueNumber) ?? 0;
             appointment.QueueNumber = maxQueue + 1;
         }
 
@@ -114,9 +142,15 @@ public class AppointmentService : IAppointmentService
         return appointment;
     }
 
-    public MedicalRecord CompleteExam(int id, CompleteExamDto dto)
+    public MedicalRecord CompleteExam(int id, CompleteExamDto dto, int? doctorId = null)
     {
         var appointment = GetById(id);
+        if (doctorId.HasValue && appointment.DoctorId != doctorId.Value)
+            throw new UnauthorizedAccessException("Ca khám này được phân công cho bác sĩ khác.");
+        if (appointment.Status != AppointmentStatus.CheckedIn)
+            throw new InvalidOperationException("Chỉ ca khám đã check-in mới được hoàn tất.");
+        if (context.MedicalRecords.Any(record => record.AppointmentId == appointment.Id))
+            throw new InvalidOperationException("Ca khám này đã có hồ sơ bệnh án.");
         appointment.Status = AppointmentStatus.Completed;
 
         var record = new MedicalRecord
@@ -227,7 +261,9 @@ public class AppointmentService : IAppointmentService
         var hasConflict = context.Appointments.Any(item =>
             item.Id != ignoredId &&
             item.DoctorId == appointment.DoctorId &&
-            item.Status == AppointmentStatus.Confirmed &&
+            (item.Status == AppointmentStatus.Confirmed ||
+             item.Status == AppointmentStatus.CheckedIn ||
+             item.Status == AppointmentStatus.Scheduled) &&
             item.AppointmentDate == appointment.AppointmentDate);
 
         if (hasConflict)
@@ -258,4 +294,3 @@ public class AppointmentService : IAppointmentService
         };
     }
 }
-

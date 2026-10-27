@@ -8,6 +8,7 @@ public class User
     public string PasswordHash { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
     public string Role { get; set; } = "Receptionist";
+    public int? DoctorId { get; set; }
     public bool IsLocked { get; set; } = false;
     public DateTime CreatedAt { get; set; } = DateTime.Now;
 }

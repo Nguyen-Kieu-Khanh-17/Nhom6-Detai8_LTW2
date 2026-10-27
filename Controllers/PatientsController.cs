@@ -13,16 +13,24 @@ namespace StudentManagement.Controllers;
 public class PatientsController : ControllerBase
 {
     private readonly IPatientManager patientManager;
+    private readonly IAppointmentService appointmentService;
 
-    public PatientsController(IPatientManager patientManager)
+    public PatientsController(IPatientManager patientManager, IAppointmentService appointmentService)
     {
         this.patientManager = patientManager;
+        this.appointmentService = appointmentService;
     }
 
     [HttpGet]
     [Authorize(Roles = "Receptionist,Admin,Doctor")]
     public ActionResult<List<Patient>> GetAll()
     {
+        if (User.IsInRole("Doctor"))
+        {
+            if (!int.TryParse(User.FindFirstValue("doctor_id"), out var doctorId))
+                return Conflict(new { message = "Tài khoản bác sĩ chưa được quản trị viên gắn với hồ sơ bác sĩ." });
+            return Ok(patientManager.GetForDoctor(doctorId));
+        }
         return Ok(patientManager.GetAll());
     }
 
@@ -83,13 +91,24 @@ public class PatientsController : ControllerBase
     {
         try
         {
-            return Ok(patientManager.FindById(id));
+            var patient = patientManager.FindById(id);
+            if (User.IsInRole("Doctor"))
+            {
+                if (!int.TryParse(User.FindFirstValue("doctor_id"), out var doctorId))
+                    return Conflict(new { message = "Tài khoản bác sĩ chưa được quản trị viên gắn với hồ sơ bác sĩ." });
+                if (!IsPatientAssignedToDoctor(id, doctorId))
+                    return Forbid();
+            }
+            return Ok(patient);
         }
         catch (KeyNotFoundException exception)
         {
             return NotFound(new { message = exception.Message });
         }
     }
+
+    private bool IsPatientAssignedToDoctor(int patientId, int doctorId) =>
+        appointmentService.GetForPatientByDoctor(patientId, doctorId).Count > 0;
 
     [HttpPost]
     [Authorize(Roles = "Receptionist,Admin")]

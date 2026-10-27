@@ -63,9 +63,10 @@ public class InvoicesController : ControllerBase
 
     [HttpPatch("{id}/confirm")]
     [Authorize(Roles = "Admin,Receptionist")]
-    public async Task<ActionResult> ConfirmPayment(int id, [FromBody] ConfirmPaymentRequest req)
+    public async Task<ActionResult> ConfirmPayment(int id, [FromBody] ConfirmPaymentRequest? req = null)
     {
-        var success = await invoiceService.ConfirmPaymentAsync(id, req.PaymentMethod);
+        var method = req?.PaymentMethod ?? "Cash";
+        var success = await invoiceService.ConfirmPaymentAsync(id, method);
         if (!success) return NotFound(new { message = "Không tìm thấy hóa đơn." });
         return Ok(new { message = "Xác nhận thanh toán thành công." });
     }

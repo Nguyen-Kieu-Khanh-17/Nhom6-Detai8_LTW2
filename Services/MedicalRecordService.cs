@@ -23,6 +23,12 @@ public class MedicalRecordService : IMedicalRecordService
         return query.OrderByDescending(item => item.ExaminedAt).ToList();
     }
 
+    public List<MedicalRecord> GetForDoctor(int doctorId) =>
+        context.MedicalRecords
+            .Where(record => record.DoctorId == doctorId)
+            .OrderByDescending(record => record.ExaminedAt)
+            .ToList();
+
     public MedicalRecord GetById(int id)
     {
         return context.MedicalRecords.FirstOrDefault(item => item.Id == id)

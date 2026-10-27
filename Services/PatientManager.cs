@@ -17,6 +17,15 @@ public class PatientManager : IPatientManager
         return context.Patients.OrderBy(patient => patient.Id).ToList();
     }
 
+    public List<Patient> GetForDoctor(int doctorId)
+    {
+        return context.Patients
+            .Where(patient => context.Appointments.Any(appointment =>
+                appointment.PatientId == patient.Id && appointment.DoctorId == doctorId))
+            .OrderBy(patient => patient.Id)
+            .ToList();
+    }
+
     public Patient FindById(int id)
     {
         return context.Patients.FirstOrDefault(patient => patient.Id == id)

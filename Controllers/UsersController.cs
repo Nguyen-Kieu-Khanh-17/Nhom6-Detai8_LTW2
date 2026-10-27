@@ -11,12 +11,16 @@ namespace StudentManagement.Controllers;
 public class UsersController : ControllerBase
 {
     private readonly IUserService userService;
+    private readonly IAuthService authService;
     private readonly IAuditLogService auditLogService;
+    private readonly IJwtTokenService jwtTokenService;
 
-    public UsersController(IUserService userService, IAuditLogService auditLogService)
+    public UsersController(IUserService userService, IAuthService authService, IAuditLogService auditLogService, IJwtTokenService jwtTokenService)
     {
         this.userService = userService;
+        this.authService = authService;
         this.auditLogService = auditLogService;
+        this.jwtTokenService = jwtTokenService;
     }
 
     [HttpGet]
@@ -41,6 +45,7 @@ public class UsersController : ControllerBase
     }
 
     [HttpPut("{id:int}")]
+    [Authorize(Roles = "Admin")]
     public async Task<ActionResult<UserDto>> UpdateUser(int id, [FromBody] UpdateUserDto dto)
     {
         try
@@ -60,6 +65,7 @@ public class UsersController : ControllerBase
     }
 
     [HttpDelete("{id:int}")]
+    
     public async Task<IActionResult> DeleteUser(int id)
     {
         try
@@ -84,6 +90,7 @@ public class UsersController : ControllerBase
     }
 
     [HttpPatch("{id:int}/lock")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> LockUser(int id, [FromBody] LockRequest req)
     {
         try
@@ -104,6 +111,7 @@ public class UsersController : ControllerBase
     }
 
     [HttpPost("{id:int}/reset-password")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> ResetPassword(int id, [FromBody] ResetPasswordRequest req)
     {
         try
@@ -119,6 +127,7 @@ public class UsersController : ControllerBase
     }
 
     [HttpPatch("{id:int}/role")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> UpdateRole(int id, [FromBody] string role)
     {
         try
@@ -131,16 +140,29 @@ public class UsersController : ControllerBase
         catch (KeyNotFoundException exception) { return NotFound(new { message = exception.Message }); }
     }
 
+    [HttpPatch("{id:int}/doctor")]
+    public IActionResult AssignDoctor(int id, [FromBody] AssignDoctorDto dto)
+    {
+        try
+        {
+            userService.AssignDoctor(id, dto.DoctorId);
+            return NoContent();
+        }
+        catch (KeyNotFoundException exception) { return NotFound(new { message = exception.Message }); }
+        catch (InvalidOperationException exception) { return Conflict(new { message = exception.Message }); }
+    }
+
     [AllowAnonymous]
     [HttpPost("login")]
     public ActionResult<UserDto> Login(LoginDto login)
     {
         try
         {
-            var user = userService.Login(login);
+            var user = authService.Login(login);
             if (user is null)
                 return Unauthorized(new { message = "Tên đăng nhập hoặc mật khẩu không đúng." });
 
+            user.AccessToken = jwtTokenService.CreateToken(user);
             return Ok(user);
         }
         catch (InvalidOperationException ex)

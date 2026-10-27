@@ -69,7 +69,7 @@ namespace StudentManagement.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Appointments");
+                    b.ToTable("Appointments", (string)null);
                 });
 
             modelBuilder.Entity("StudentManagement.Models.ChatMessage", b =>
@@ -109,7 +109,7 @@ namespace StudentManagement.Migrations
 
                     b.HasIndex("RoomId");
 
-                    b.ToTable("ChatMessages");
+                    b.ToTable("ChatMessages", (string)null);
                 });
 
             modelBuilder.Entity("StudentManagement.Models.ChatRoom", b =>
@@ -146,7 +146,7 @@ namespace StudentManagement.Migrations
 
                     b.HasIndex("SupportUserId");
 
-                    b.ToTable("ChatRooms");
+                    b.ToTable("ChatRooms", (string)null);
                 });
 
             modelBuilder.Entity("StudentManagement.Models.Doctor", b =>
@@ -175,7 +175,7 @@ namespace StudentManagement.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Doctors");
+                    b.ToTable("Doctors", (string)null);
                 });
 
             modelBuilder.Entity("StudentManagement.Models.DoctorLeaveRequest", b =>
@@ -209,7 +209,7 @@ namespace StudentManagement.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("DoctorLeaveRequests");
+                    b.ToTable("DoctorLeaveRequests", (string)null);
                 });
 
             modelBuilder.Entity("StudentManagement.Models.DoctorSchedule", b =>
@@ -237,7 +237,7 @@ namespace StudentManagement.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("DoctorSchedules");
+                    b.ToTable("DoctorSchedules", (string)null);
                 });
 
             modelBuilder.Entity("StudentManagement.Models.MedicalRecord", b =>
@@ -274,7 +274,7 @@ namespace StudentManagement.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("MedicalRecords");
+                    b.ToTable("MedicalRecords", (string)null);
                 });
 
             modelBuilder.Entity("StudentManagement.Models.Notification", b =>
@@ -313,7 +313,7 @@ namespace StudentManagement.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Notifications");
+                    b.ToTable("Notifications", (string)null);
                 });
 
             modelBuilder.Entity("StudentManagement.Models.Patient", b =>
@@ -348,7 +348,7 @@ namespace StudentManagement.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Patients");
+                    b.ToTable("Patients", (string)null);
                 });
 
             modelBuilder.Entity("StudentManagement.Models.Prescription", b =>
@@ -375,7 +375,7 @@ namespace StudentManagement.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Prescriptions");
+                    b.ToTable("Prescriptions", (string)null);
                 });
 
             modelBuilder.Entity("StudentManagement.Models.Review", b =>
@@ -421,7 +421,7 @@ namespace StudentManagement.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Reviews");
+                    b.ToTable("Reviews", (string)null);
                 });
 
             modelBuilder.Entity("StudentManagement.Models.SupportMessage", b =>
@@ -455,7 +455,7 @@ namespace StudentManagement.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("SupportMessages");
+                    b.ToTable("SupportMessages", (string)null);
                 });
 
             modelBuilder.Entity("StudentManagement.Models.User", b =>
@@ -488,7 +488,7 @@ namespace StudentManagement.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Users");
+                    b.ToTable("Users", (string)null);
                 });
 
             modelBuilder.Entity("StudentManagement.Models.Appointment", b =>

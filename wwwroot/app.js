@@ -123,8 +123,9 @@ function renderAppointments() {
     let actionsHtml = '';
     if (isPending) {
       actionsHtml += `<button class="btn-action btn-confirm" onclick="confirmAppointment(${item.id})">✓ Duyệt</button>`;
+      actionsHtml += `<button class="btn-action btn-checkin" onclick="checkInAppointment(${item.id})">🏥 Tiếp nhận (Cấp STT)</button>`;
     }
-    if (isPending || isConfirmed) {
+    if (isConfirmed) {
       actionsHtml += `<button class="btn-action btn-checkin" onclick="checkInAppointment(${item.id})">🏥 Check-in (Xếp STT)</button>`;
     }
     if (isCheckedIn) {

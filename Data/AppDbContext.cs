@@ -29,10 +29,22 @@ public class AppDbContext : DbContext
     public DbSet<Review> Reviews => Set<Review>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
     public DbSet<Invoice> Invoices => Set<Invoice>();
+    public DbSet<StoredFile> StoredFiles => Set<StoredFile>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+
+        modelBuilder.Entity<User>(entity =>
+        {
+            entity.HasOne<Doctor>()
+                .WithMany()
+                .HasForeignKey(user => user.DoctorId)
+                .OnDelete(DeleteBehavior.NoAction);
+            entity.HasIndex(user => user.DoctorId)
+                .IsUnique()
+                .HasFilter("[DoctorId] IS NOT NULL");
+        });
 
         modelBuilder.Entity<Appointment>(entity =>
         {

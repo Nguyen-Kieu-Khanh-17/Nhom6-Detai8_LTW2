@@ -7,6 +7,8 @@ public interface IAppointmentService
 {
     List<Appointment> GetAll(DateTime? date = null, AppointmentStatus? status = null);
     List<Appointment> GetForUser(int userId);
+    List<Appointment> GetForDoctor(int doctorId, DateTime? date = null, AppointmentStatus? status = null);
+    List<Appointment> GetForPatientByDoctor(int patientId, int doctorId);
     Appointment GetById(int id);
     Appointment Add(Appointment appointment);
     void Update(int id, Appointment appointment);
@@ -15,5 +17,5 @@ public interface IAppointmentService
     Appointment Confirm(int id, int? receptionistUserId = null);
     Appointment CheckIn(int id, int? receptionistUserId = null);
     Appointment Reschedule(int id, DateTime newDate, int? newDoctorId = null, string? reason = null, int? userId = null, string? role = null);
-    MedicalRecord CompleteExam(int id, CompleteExamDto dto);
+    MedicalRecord CompleteExam(int id, CompleteExamDto dto, int? doctorId = null);
 }

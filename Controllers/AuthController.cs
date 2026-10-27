@@ -12,13 +12,15 @@ namespace StudentManagement.Controllers;
 [Route("api/auth")]
 public class AuthController : ControllerBase
 {
-    private readonly IUserService userService;
+    private readonly IAuthService authService;
     private readonly IPatientManager patientManager;
+    private readonly IJwtTokenService jwtTokenService;
 
-    public AuthController(IUserService userService, IPatientManager patientManager)
+    public AuthController(IAuthService authService, IPatientManager patientManager, IJwtTokenService jwtTokenService)
     {
-        this.userService = userService;
+        this.authService = authService;
         this.patientManager = patientManager;
+        this.jwtTokenService = jwtTokenService;
     }
 
     [AllowAnonymous]
@@ -27,7 +29,7 @@ public class AuthController : ControllerBase
     {
         try
         {
-            var user = userService.Register(register);
+            var user = authService.Register(register);
             patientManager.Add(new StudentManagement.Models.Patient
             {
                 UserId = user.Id,
@@ -51,7 +53,7 @@ public class AuthController : ControllerBase
     {
         try
         {
-            var user = userService.ChangePassword(int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!), password.CurrentPassword, password.NewPassword);
+            var user = authService.ChangePassword(int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!), password.CurrentPassword, password.NewPassword);
             return Ok(user);
         }
         catch (UnauthorizedAccessException exception) { return Unauthorized(new { message = exception.Message }); }
@@ -63,7 +65,7 @@ public class AuthController : ControllerBase
     public IActionResult ForgotPassword(ForgotPasswordDto request)
     {
         // Do not reveal whether an account exists. Email delivery can be wired in later.
-        _ = userService.UserExists(request.UsernameOrEmail);
+        _ = authService.UserExists(request.UsernameOrEmail);
         return Ok(new { message = "Nếu tài khoản tồn tại, hướng dẫn đặt lại mật khẩu sẽ được gửi qua email." });
     }
 
@@ -71,10 +73,11 @@ public class AuthController : ControllerBase
     [HttpPost("login")]
     public async Task<ActionResult<UserDto>> Login(LoginDto login)
     {
-        var user = userService.Login(login);
+        var user = authService.Login(login);
         if (user is null)
             return Unauthorized(new { message = "Tên đăng nhập hoặc mật khẩu không đúng." });
 
+        user.AccessToken = jwtTokenService.CreateToken(user);
         var claims = new List<Claim>
         {
             new(ClaimTypes.NameIdentifier, user.Id.ToString()),
@@ -82,6 +85,8 @@ public class AuthController : ControllerBase
             new(ClaimTypes.GivenName, user.FullName),
             new(ClaimTypes.Role, user.Role)
         };
+        if (user.DoctorId.HasValue)
+            claims.Add(new Claim("doctor_id", user.DoctorId.Value.ToString()));
 
         await HttpContext.SignInAsync(
             CookieAuthenticationDefaults.AuthenticationScheme,
@@ -99,7 +104,8 @@ public class AuthController : ControllerBase
         {
             username = User.Identity?.Name,
             fullName = User.FindFirstValue(ClaimTypes.GivenName),
-            role = User.FindFirstValue(ClaimTypes.Role)
+            role = User.FindFirstValue(ClaimTypes.Role),
+            doctorId = int.TryParse(User.FindFirstValue("doctor_id"), out var doctorId) ? doctorId : (int?)null
         });
     }
 

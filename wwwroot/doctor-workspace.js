@@ -12,7 +12,9 @@ let allMedicalRecords = [];
 
 async function loadUser() {
   currentDoctorUser = await request('/api/auth/me');
-  document.querySelector('#welcome').textContent = `Xin chào Bác sĩ ${currentDoctorUser.fullName}. Chúc bạn có một ngày làm việc hiệu quả.`;
+  document.querySelector('#welcome').textContent = currentDoctorUser.doctorId
+    ? `Xin chào Bác sĩ ${currentDoctorUser.fullName}. Chúc bạn có một ngày làm việc hiệu quả.`
+    : `Tài khoản ${currentDoctorUser.fullName} chưa được gắn hồ sơ bác sĩ. Vui lòng liên hệ quản trị viên để được phân công.`;
 }
 
 async function loadPatientsList() {
@@ -57,7 +59,7 @@ async function loadQueue() {
       `;
     }).join('');
   } catch (err) {
-    queueContainer.innerHTML = '<p class="label">Không thể tải hàng chờ.</p>';
+    queueContainer.innerHTML = `<p class="label">${escapeHtml(err.message)}</p>`;
   }
 }
 

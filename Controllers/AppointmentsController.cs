@@ -34,13 +34,30 @@ public class AppointmentsController : ControllerBase
     {
         if (User.IsInRole("User"))
             return Ok(appointmentService.GetForUser(int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!)));
+        if (User.IsInRole("Doctor"))
+        {
+            if (!TryGetDoctorId(out var doctorId))
+                return Conflict(new { message = "Tài khoản bác sĩ chưa được quản trị viên gắn với hồ sơ bác sĩ." });
+            return Ok(appointmentService.GetForDoctor(doctorId, date, status));
+        }
         return Ok(appointmentService.GetAll(date, status));
     }
 
     [HttpGet("{id:int}")]
     public ActionResult<Appointment> GetById(int id)
     {
-        try { return Ok(appointmentService.GetById(id)); }
+        try
+        {
+            var appointment = appointmentService.GetById(id);
+            if (User.IsInRole("User") &&
+                !appointmentService.GetForUser(int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!))
+                    .Any(item => item.Id == appointment.Id))
+                return Forbid();
+            if (User.IsInRole("Doctor") &&
+                (!TryGetDoctorId(out var doctorId) || appointment.DoctorId != doctorId))
+                return Forbid();
+            return Ok(appointment);
+        }
         catch (KeyNotFoundException exception) { return NotFound(new { message = exception.Message }); }
     }
 
@@ -80,7 +97,7 @@ public class AppointmentsController : ControllerBase
                 UserId = apptUserId,
                 AppointmentDate = dto.AppointmentDate,
                 Reason = dto.Reason.Trim(),
-                Status = User.IsInRole("User") ? AppointmentStatus.Pending : dto.Status
+                Status = AppointmentStatus.Pending
             });
 
             try
@@ -98,7 +115,7 @@ public class AppointmentsController : ControllerBase
     }
 
     [HttpPut("{id:int}")]
-    [Authorize(Roles = "Doctor,Receptionist,Admin")]
+    [Authorize(Roles = "Receptionist,Admin")]
     public IActionResult Update(int id, AppointmentDto dto)
     {
         try
@@ -135,6 +152,7 @@ public class AppointmentsController : ControllerBase
             return Ok(appointment);
         }
         catch (KeyNotFoundException ex) { return NotFound(new { message = ex.Message }); }
+        catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); }
     }
 
     [HttpPatch("{id:int}/check-in")]
@@ -156,6 +174,7 @@ public class AppointmentsController : ControllerBase
             return Ok(appointment);
         }
         catch (KeyNotFoundException ex) { return NotFound(new { message = ex.Message }); }
+        catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); }
     }
 
     [HttpPost("{id:int}/complete")]
@@ -164,7 +183,14 @@ public class AppointmentsController : ControllerBase
     {
         try
         {
-            var record = appointmentService.CompleteExam(id, dto);
+            int? doctorId = null;
+            if (User.IsInRole("Doctor"))
+            {
+                if (!TryGetDoctorId(out var assignedDoctorId))
+                    return Conflict(new { message = "Tài khoản bác sĩ chưa được quản trị viên gắn với hồ sơ bác sĩ." });
+                doctorId = assignedDoctorId;
+            }
+            var record = appointmentService.CompleteExam(id, dto, doctorId);
             
             try
             {
@@ -178,6 +204,8 @@ public class AppointmentsController : ControllerBase
             return Ok(record);
         }
         catch (KeyNotFoundException ex) { return NotFound(new { message = ex.Message }); }
+        catch (UnauthorizedAccessException ex) { return StatusCode(StatusCodes.Status403Forbidden, new { message = ex.Message }); }
+        catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); }
     }
 
     [HttpDelete("{id:int}")]
@@ -209,7 +237,7 @@ public class AppointmentsController : ControllerBase
             return NoContent();
         }
         catch (KeyNotFoundException exception) { return NotFound(new { message = exception.Message }); }
-        catch (UnauthorizedAccessException exception) { return Forbid(exception.Message); }
+        catch (UnauthorizedAccessException exception) { return StatusCode(StatusCodes.Status403Forbidden, new { message = exception.Message }); }
         catch (InvalidOperationException exception) { return Conflict(new { message = exception.Message }); }
     }
 
@@ -219,6 +247,9 @@ public class AppointmentsController : ControllerBase
     {
         try
         {
+            if (User.IsInRole("Doctor") &&
+                (!TryGetDoctorId(out var doctorId) || appointmentService.GetById(id).DoctorId != doctorId))
+                return Forbid();
             int? userId = null;
             if (int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var uid))
             {
@@ -249,5 +280,7 @@ public class AppointmentsController : ControllerBase
         catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
         catch (InvalidOperationException ex) { return Conflict(new { message = ex.Message }); }
     }
-}
 
+    private bool TryGetDoctorId(out int doctorId) =>
+        int.TryParse(User.FindFirstValue("doctor_id"), out doctorId);
+}

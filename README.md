@@ -92,6 +92,14 @@ POST /api/auth/change-password
 POST /api/auth/forgot-password
 ```
 
+API đăng nhập trả về `accessToken` cùng thông tin người dùng và vẫn tạo cookie để tương thích với website. Client gọi API có thể gửi token trong header `Authorization: Bearer <accessToken>`; server chấp nhận cả cookie lẫn bearer token. JWT signing key không được lưu trong `appsettings.json`; cấu hình local bằng .NET User Secrets:
+
+```powershell
+dotnet user-secrets set "JwtSettings:SecretKey" "Scretkey123456789123456789123456789123456789" --project .\StudentManagement.csproj
+```
+
+Khi triển khai, đặt `JwtSettings__SecretKey` trong secret store của môi trường triển khai bằng một khóa ngẫu nhiên riêng dài ít nhất 32 byte; không sử dụng khóa ví dụ ở trên.
+
 ## API bác sĩ và lịch hẹn
 
 ```text

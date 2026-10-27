@@ -584,3 +584,8 @@ function escapeHtml(str) {
 Promise.all([loadUser(), loadDoctors()])
   .then(() => Promise.all([loadAppointments(), loadMedicalRecords()]))
   .catch(() => { location.href = '/login.html'; });
+
+window.loadAppointments = loadAppointments;
+window.addEventListener('medika:appointment-created', () => {
+  loadAppointments();
+});

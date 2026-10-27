@@ -171,7 +171,11 @@ async function loadUsers() {
   if (!tbody) return;
 
   try {
-    const users = await request('/api/users');
+    const [users, doctors] = await Promise.all([
+      request('/api/users'),
+      request('/api/doctors')
+    ]);
+    allDoctorsCache = doctors || [];
     if (!users || !users.length) {
       tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">Chưa có tài khoản nào.</td></tr>';
       return;
@@ -204,6 +208,15 @@ async function loadUsers() {
               <option ${u.role === 'Support' ? 'selected' : ''}>Support</option>
               <option ${u.role === 'Admin' ? 'selected' : ''}>Admin</option>
             </select>
+            ${u.role === 'Doctor' ? `
+              <div style="display:flex;gap:4px;margin-top:6px;">
+                <select id="user-doctor-${u.id}" aria-label="Hồ sơ bác sĩ cho ${escapeHtml(u.username)}" style="max-width:200px;padding:4px 6px;border:1px solid #cbd5e1;border-radius:6px;">
+                  <option value="">Chọn hồ sơ bác sĩ</option>
+                  ${allDoctorsCache.map(d => `<option value="${d.id}" ${d.id === u.doctorId ? 'selected' : ''}>${escapeHtml(d.fullName)} (#${d.id})</option>`).join('')}
+                </select>
+                <button class="action-btn-sm" style="background:#2563eb;color:#fff;" onclick="assignDoctor(${u.id})">Gắn</button>
+              </div>
+            ` : ''}
           </td>
           <td>${statusBadge}</td>
           <td><small style="color:#64748b;">${createdDate}</small></td>
@@ -221,6 +234,21 @@ async function loadUsers() {
     tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:#ef4444;">Không thể tải danh sách tài khoản: ${escapeHtml(e.message)}</td></tr>`;
   }
 }
+
+window.assignDoctor = async userId => {
+  const doctorId = document.querySelector(`#user-doctor-${userId}`)?.value;
+  try {
+    await request(`/api/users/${userId}/doctor`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ doctorId: doctorId ? Number(doctorId) : null })
+    });
+    adminMessage.textContent = '✓ Đã gắn hồ sơ bác sĩ cho tài khoản.';
+    await loadUsers();
+  } catch (error) {
+    adminMessage.textContent = error.message;
+  }
+};
 
 window.changeRole = async (id, role) => {
   try {
@@ -699,13 +727,146 @@ window.deleteReview = async (id) => {
 /* --- CẤU HÌNH GOOGLE GEMINI AI --- */
 const geminiMsg = document.querySelector('#gemini-config-message');
 const geminiBadge = document.querySelector('#gemini-status-badge');
+const aiProviderSelect = document.querySelector('#gemini-provider');
+const aiProviderSettings = {
+  Mistral: {
+    keyUrl: 'https://console.mistral.ai/api-keys/',
+    keyLabel: 'Mistral API Key',
+    help: 'Mistral Experiment tier/free access tùy điều kiện tài khoản và model.',
+    defaultModel: 'mistral-small-latest'
+  },
+  Gemini: {
+    keyUrl: 'https://aistudio.google.com/app/apikey',
+    keyLabel: 'Google Gemini API Key',
+    help: 'Free tier và quota phụ thuộc model, project và tài khoản Google.',
+    defaultModel: 'gemini-2.5-flash'
+  },
+  Groq: {
+    keyUrl: 'https://console.groq.com/keys',
+    keyLabel: 'Groq API Key',
+    help: 'Groq có free tier giới hạn; kiểm tra hạn mức hiện tại trong console.',
+    defaultModel: 'openai/gpt-oss-20b'
+  },
+  OpenRouter: {
+    keyUrl: 'https://openrouter.ai/keys',
+    keyLabel: 'OpenRouter API Key',
+    help: 'Ứng dụng chỉ liệt kê model có hậu tố :free; danh sách và quota có thể thay đổi.',
+    defaultModel: 'meta-llama/llama-3.3-70b-instruct:free'
+  },
+  Cloudflare: {
+    keyUrl: 'https://dash.cloudflare.com/',
+    keyLabel: 'Cloudflare API Token',
+    help: 'Cần Account ID và API token có quyền Workers AI; free Neurons tùy tài khoản.',
+    defaultModel: '@cf/meta/llama-3.1-8b-instruct'
+  }
+};
+
+function updateAiProviderFields(provider) {
+  const settings = aiProviderSettings[provider] || aiProviderSettings.Mistral;
+  const label = document.querySelector('#ai-api-key-label');
+  const help = document.querySelector('#ai-api-key-help');
+  const link = document.querySelector('#ai-key-link');
+  const accountRow = document.querySelector('#cloudflare-account-row');
+  const modelSelect = document.querySelector('#gemini-model');
+  if (label) label.firstChild.textContent = `${settings.keyLabel} `;
+  if (help) help.firstChild.textContent = `${settings.help} `;
+  if (link) {
+    link.href = settings.keyUrl;
+    link.textContent = provider === 'Mistral' ? 'Mistral Console' : `${provider} Console`;
+  }
+  if (accountRow) accountRow.hidden = provider !== 'Cloudflare';
+  if (modelSelect && !modelSelect.value) {
+    const option = document.createElement('option');
+    option.value = settings.defaultModel;
+    option.textContent = settings.defaultModel;
+    modelSelect.appendChild(option);
+    modelSelect.value = settings.defaultModel;
+  }
+}
+
+aiProviderSelect?.addEventListener('change', () => {
+  const provider = aiProviderSelect.value;
+  updateAiProviderFields(provider);
+  const modelSelect = document.querySelector('#gemini-model');
+  if (modelSelect) {
+    modelSelect.replaceChildren();
+    const defaultModel = aiProviderSettings[provider]?.defaultModel;
+    if (defaultModel) {
+      const option = document.createElement('option');
+      option.value = defaultModel;
+      option.textContent = defaultModel;
+      modelSelect.appendChild(option);
+    }
+  }
+  if (geminiMsg) {
+    geminiMsg.style.color = '#b45309';
+    geminiMsg.textContent = 'Lưu nhà cung cấp và API key trước để tải danh sách model. Hãy xác nhận free tier/quota trên trang nhà cung cấp.';
+  }
+});
+
+function updateGeminiModelOptions(models, selectedModel) {
+  const select = document.querySelector('#gemini-model');
+  const supportedModels = [...new Set(models
+    .filter(model => typeof model === 'string' && model.trim())
+    .map(model => model.trim())
+    .filter(model => !model.endsWith('-tts')))];
+
+  if (!select || supportedModels.length === 0) return;
+
+  select.replaceChildren();
+  supportedModels.forEach(model => {
+    const option = document.createElement('option');
+    option.value = model;
+    option.textContent = model;
+    select.appendChild(option);
+  });
+
+  const provider = aiProviderSelect?.value || 'Gemini';
+  const canKeepCurrentModel = provider !== 'OpenRouter' || selectedModel?.endsWith(':free');
+  if (selectedModel && canKeepCurrentModel && !supportedModels.includes(selectedModel)) {
+    const option = document.createElement('option');
+    option.value = selectedModel;
+    option.textContent = `${selectedModel} (đang cấu hình, không có trong danh sách API hỗ trợ)`;
+    select.appendChild(option);
+  }
+
+  select.value = canKeepCurrentModel && selectedModel ? selectedModel : supportedModels[0];
+}
 
 async function loadGeminiConfig() {
   if (!geminiBadge) return;
   try {
     const config = await request('/api/chatbot/config');
-    if (document.querySelector('#gemini-model')) {
-      document.querySelector('#gemini-model').value = config.model || 'gemini-1.5-flash';
+    const provider = config.provider || 'Gemini';
+    if (aiProviderSelect) aiProviderSelect.value = provider;
+    updateAiProviderFields(provider);
+    const modelSelect = document.querySelector('#gemini-model');
+    const selectedModel = config.model || aiProviderSettings[provider]?.defaultModel || 'gemini-2.5-flash';
+    if (modelSelect) {
+      modelSelect.value = selectedModel;
+      if (!modelSelect.value) {
+        const option = document.createElement('option');
+        option.value = selectedModel;
+        option.textContent = selectedModel;
+        modelSelect.appendChild(option);
+        modelSelect.value = selectedModel;
+      }
+    }
+    if (config.hasKey) {
+      try {
+        const query = new URLSearchParams({ provider });
+        if (config.accountId) query.set('accountId', config.accountId);
+        const availableModels = await request(`/api/chatbot/available-models?${query.toString()}`);
+        if (Array.isArray(availableModels)) {
+          updateGeminiModelOptions(availableModels, selectedModel);
+        }
+      } catch (err) {
+        console.error(`Không thể tải danh sách model ${provider}:`, err);
+        if (geminiMsg) {
+          geminiMsg.style.color = '#b45309';
+          geminiMsg.textContent += ' Không thể tải danh sách model trực tuyến; hãy kiểm tra API key hoặc kết nối mạng.';
+        }
+      }
     }
     if (document.querySelector('#gemini-enabled')) {
       document.querySelector('#gemini-enabled').checked = config.isEnabled !== false;
@@ -715,7 +876,7 @@ async function loadGeminiConfig() {
     }
 
     if (config.hasKey && config.isEnabled) {
-      geminiBadge.textContent = '🟢 Đã kết nối Google Gemini AI';
+      geminiBadge.textContent = `🟢 Đã cấu hình ${provider} AI`;
       geminiBadge.style.background = '#dcfce7';
       geminiBadge.style.color = '#15803d';
     } else if (!config.hasKey) {
@@ -738,11 +899,13 @@ document.querySelector('#gemini-config-form')?.addEventListener('submit', async 
     geminiMsg.style.color = '#0284c7';
     geminiMsg.textContent = 'Đang lưu cấu hình...';
 
-    const apiKeyInput = document.querySelector('#gemini-api-key').value.trim();
+    const apiKeyInput = (document.querySelector('#gemini-api-key')?.value || '').trim();
     const model = document.querySelector('#gemini-model').value;
     const isEnabled = document.querySelector('#gemini-enabled').checked;
+    const provider = aiProviderSelect?.value || 'Gemini';
+    const accountId = (document.querySelector('#cloudflare-account-id')?.value || '').trim();
 
-    const payload = { model, isEnabled };
+    const payload = { model, isEnabled, provider, accountId };
     if (apiKeyInput) payload.apiKey = apiKeyInput;
 
     await request('/api/chatbot/config', {
@@ -752,7 +915,7 @@ document.querySelector('#gemini-config-form')?.addEventListener('submit', async 
     });
 
     geminiMsg.style.color = '#059669';
-    geminiMsg.textContent = '✓ Đã lưu cấu hình Google Gemini AI thành công!';
+    geminiMsg.textContent = `✓ Đã lưu cấu hình ${provider} thành công!`;
     document.querySelector('#gemini-api-key').value = '';
     await loadGeminiConfig();
   } catch (err) {
@@ -763,16 +926,38 @@ document.querySelector('#gemini-config-form')?.addEventListener('submit', async 
 
 document.querySelector('#btn-test-gemini')?.addEventListener('click', async () => {
   try {
+    const provider = aiProviderSelect?.value || 'Gemini';
     geminiMsg.style.color = '#0284c7';
-    geminiMsg.textContent = 'Đang kiểm tra kết nối tới Google Gemini...';
+    geminiMsg.textContent = `Đang kiểm tra kết nối tới ${provider}...`;
 
-    const res = await request('/api/chatbot/test-connection', { method: 'POST' });
+    const apiKeyInput = (document.querySelector('#gemini-api-key')?.value || '').trim();
+    const model = document.querySelector('#gemini-model').value;
+    const accountId = (document.querySelector('#cloudflare-account-id')?.value || '').trim();
+
+    const payload = { provider, accountId };
+    if (apiKeyInput) payload.apiKey = apiKeyInput;
+    if (model) payload.model = model;
+
+    const res = await request('/api/chatbot/test-connection', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    if (Array.isArray(res.availableModels) && res.availableModels.length > 0) {
+      updateGeminiModelOptions(res.availableModels, model);
+    }
+
     if (res.success) {
       geminiMsg.style.color = '#059669';
       geminiMsg.textContent = '✓ ' + res.message;
     } else {
       geminiMsg.style.color = '#dc2626';
-      geminiMsg.textContent = '✕ ' + res.message;
+      let msg = '✕ ' + (res.message || 'Không thể kết nối');
+      if (res.errorDetails) {
+        msg += ` [${provider}: ${res.errorDetails}]`;
+      }
+      geminiMsg.textContent = msg;
     }
     await loadGeminiConfig();
   } catch (err) {

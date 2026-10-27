@@ -729,30 +729,44 @@
         <article class="card full" style="border: 2px solid #3b82f6;">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
             <div>
-              <h2 style="margin:0;color:#1e40af;">🤖 Cấu hình & Liên kết Google Gemini AI Chatbot</h2>
-              <small style="color:#64748b;">Tích hợp trí tuệ nhân tạo Google Gemini giúp tư vấn sức khỏe chuẩn y khoa và tự động điều hướng chuyên khoa.</small>
+              <h2 style="margin:0;color:#1e40af;">🤖 Cấu hình nhà cung cấp AI Chatbot</h2>
+              <small style="color:#64748b;">Chọn nhà cung cấp có thể có gói miễn phí. Quota và chi phí phụ thuộc tài khoản; chỉ OpenRouter được lọc tự động theo model :free, các nhà cung cấp khác cần kiểm tra quota/điều kiện trước khi gọi.</small>
             </div>
             <span id="gemini-status-badge" style="padding:6px 12px;border-radius:20px;font-size:0.85rem;font-weight:600;background:#e2e8f0;color:#475569;">Đang kiểm tra...</span>
           </div>
 
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;">
             <form id="gemini-config-form" class="form">
-              <label>Google Gemini API Key
-                <input id="gemini-api-key" type="password" placeholder="Nhập khóa API (ví dụ: AIzaSy...)" autocomplete="off">
-                <small style="color:#64748b;">Khóa API bảo mật lấy từ <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color:#2563eb;text-decoration:underline;">Google AI Studio</a>. Để trống nếu muốn dùng bộ dữ liệu nội bộ Medika.</small>
+              <label>Nhà cung cấp AI
+                <select id="gemini-provider">
+                  <option value="Mistral" selected>Mistral (Experiment/free tier tùy tài khoản)</option>
+                  <option value="Gemini">Google Gemini (free tier tùy model/tài khoản)</option>
+                  <option value="Groq">Groq (free tier giới hạn)</option>
+                  <option value="OpenRouter">OpenRouter (chỉ model :free)</option>
+                  <option value="Cloudflare">Cloudflare Workers AI (free Neurons tùy tài khoản)</option>
+                </select>
+                <small id="ai-provider-help" style="color:#64748b;">Ưu tiên Mistral. Ứng dụng không thể xác minh model của các provider khác có được miễn phí hay không; hãy kiểm tra trang quota/billing trước khi dùng.</small>
               </label>
 
-              <label>Model Gemini AI
+              <label id="cloudflare-account-row" hidden>Cloudflare Account ID
+                <input id="cloudflare-account-id" autocomplete="off" placeholder="Account ID trong Cloudflare Dashboard">
+              </label>
+
+              <label id="ai-api-key-label">API Key
+                <input id="gemini-api-key" type="password" placeholder="Nhập API key của nhà cung cấp đã chọn" autocomplete="off">
+                <small id="ai-api-key-help" style="color:#64748b;">Tạo key tại <a id="ai-key-link" href="https://console.mistral.ai/api-keys/" target="_blank" rel="noopener noreferrer" style="color:#2563eb;text-decoration:underline;">Mistral Console</a>. Để trống nếu muốn dùng bộ dữ liệu nội bộ Medika.</small>
+              </label>
+
+              <label>Model AI
                 <select id="gemini-model">
-                  <option value="gemini-1.5-flash" selected>gemini-1.5-flash (Nhanh & Tối ưu nhất)</option>
-                  <option value="gemini-2.0-flash">gemini-2.0-flash (Thế hệ mới)</option>
-                  <option value="gemini-1.5-pro">gemini-1.5-pro (Mô hình suy luận sâu)</option>
+                  <option value="mistral-small-latest" selected>mistral-small-latest</option>
                 </select>
+                <small style="color:#64748b;">OpenRouter chỉ hiển thị model có hậu tố :free. Các provider khác có thể liệt kê cả model tính phí; model khả dụng không đồng nghĩa quota miễn phí còn lại.</small>
               </label>
 
               <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
                 <input id="gemini-enabled" type="checkbox" checked style="width:auto;margin:0;">
-                <span style="font-weight:600;color:#1e293b;">Kích hoạt Google Gemini AI cho Chatbot</span>
+                <span style="font-weight:600;color:#1e293b;">Kích hoạt AI bên ngoài cho Chatbot</span>
               </label>
 
               <div style="display:flex;gap:10px;margin-top:10px;">
@@ -846,7 +860,7 @@
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
   <script src="/notifications.js"></script>
-  <script src="/admin-workspace.js?v=6.0"></script>
+  <script src="/admin-workspace.js?v=6.1"></script>
   <script src="/chatbot.js"></script>
 </body>
 </html>

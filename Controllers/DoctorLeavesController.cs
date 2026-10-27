@@ -51,6 +51,21 @@ public class DoctorLeavesController : ControllerBase
         catch (ArgumentException ex) { return BadRequest(new { message = ex.Message }); }
     }
 
+    public class ReviewLeaveDto
+    {
+        public string Status { get; set; } = string.Empty;
+        public string? Note { get; set; }
+    }
+
+    [HttpPatch("{id:int}/review")]
+    [Authorize(Roles = "Admin")]
+    public async Task<ActionResult<DoctorLeaveResponseDto>> Review(int id, [FromBody] ReviewLeaveDto dto)
+    {
+        if (string.Equals(dto.Status, "Approved", StringComparison.OrdinalIgnoreCase))
+            return await Approve(id);
+        return await Reject(id, new RejectLeaveDto { Note = dto.Note });
+    }
+
     [HttpPatch("{id:int}/approve")]
     [Authorize(Roles = "Admin")]
     public async Task<ActionResult<DoctorLeaveResponseDto>> Approve(int id)

@@ -24,18 +24,37 @@ public class MedicalRecordsController : ControllerBase
             var patient = HttpContext.RequestServices.GetRequiredService<IPatientManager>().FindByUserId(userId);
             return Ok(service.GetAll(patient.Id));
         }
+        if (User.IsInRole("Doctor"))
+        {
+            if (!int.TryParse(User.FindFirstValue("doctor_id"), out var doctorId))
+                return Conflict(new { message = "Tài khoản bác sĩ chưa được quản trị viên gắn với hồ sơ bác sĩ." });
+            return Ok(service.GetForDoctor(doctorId));
+        }
         return Ok(service.GetAll(patientId));
     }
 
     [HttpGet("{id:int}")]
     public ActionResult<MedicalRecord> GetById(int id)
     {
-        try { return Ok(service.GetById(id)); }
+        try
+        {
+            var record = service.GetById(id);
+            if (User.IsInRole("User"))
+            {
+                var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+                var patient = HttpContext.RequestServices.GetRequiredService<IPatientManager>().FindByUserId(userId);
+                if (record.PatientId != patient.Id) return Forbid();
+            }
+            if (User.IsInRole("Doctor") &&
+                (!int.TryParse(User.FindFirstValue("doctor_id"), out var doctorId) || record.DoctorId != doctorId))
+                return Forbid();
+            return Ok(record);
+        }
         catch (KeyNotFoundException exception) { return NotFound(new { message = exception.Message }); }
     }
 
     [HttpPost]
-    [Authorize(Roles = "Doctor,Admin")]
+    [Authorize(Roles = "Admin")]
     public ActionResult<MedicalRecord> Create(MedicalRecordDto dto)
     {
         try
@@ -50,14 +69,34 @@ public class MedicalRecordsController : ControllerBase
     [Authorize(Roles = "Doctor,Admin")]
     public ActionResult<Prescription> AddPrescription(int id, PrescriptionDto dto)
     {
-        try { return Ok(service.AddPrescription(new Prescription { MedicalRecordId = id, Medicines = dto.Medicines.Trim(), Instructions = dto.Instructions.Trim() })); }
+        try
+        {
+            var record = service.GetById(id);
+            if (User.IsInRole("Doctor") &&
+                (!int.TryParse(User.FindFirstValue("doctor_id"), out var doctorId) || record.DoctorId != doctorId))
+                return Forbid();
+            return Ok(service.AddPrescription(new Prescription { MedicalRecordId = id, Medicines = dto.Medicines.Trim(), Instructions = dto.Instructions.Trim() }));
+        }
         catch (KeyNotFoundException exception) { return NotFound(new { message = exception.Message }); }
     }
 
     [HttpGet("{id:int}/prescriptions")]
     public ActionResult<List<Prescription>> GetPrescriptions(int id)
     {
-        try { return Ok(service.GetPrescriptions(id)); }
+        try
+        {
+            var record = service.GetById(id);
+            if (User.IsInRole("User"))
+            {
+                var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+                var patient = HttpContext.RequestServices.GetRequiredService<IPatientManager>().FindByUserId(userId);
+                if (record.PatientId != patient.Id) return Forbid();
+            }
+            if (User.IsInRole("Doctor") &&
+                (!int.TryParse(User.FindFirstValue("doctor_id"), out var doctorId) || record.DoctorId != doctorId))
+                return Forbid();
+            return Ok(service.GetPrescriptions(id));
+        }
         catch (KeyNotFoundException exception) { return NotFound(new { message = exception.Message }); }
     }
 }

@@ -51,15 +51,10 @@ public class DashboardController : ControllerBase
         }
         else if (User.IsInRole("Doctor"))
         {
-            // Bác sĩ xem dashboard của chính mình
-            if (doctorId.HasValue)
-            {
-                resolvedDoctorId = doctorId.Value;
-            }
-            else
-            {
-                return BadRequest(new { message = "Vui lòng truyền doctorId của bạn." });
-            }
+            if (!int.TryParse(User.FindFirstValue("doctor_id"), out resolvedDoctorId))
+                return Conflict(new { message = "Tài khoản bác sĩ chưa được quản trị viên gắn với hồ sơ bác sĩ." });
+            if (doctorId.HasValue && doctorId.Value != resolvedDoctorId)
+                return Forbid();
         }
         else
         {

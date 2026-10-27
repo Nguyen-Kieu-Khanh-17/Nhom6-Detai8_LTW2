@@ -60,6 +60,34 @@
     const messagesEl = document.querySelector('#chatbot-messages');
     const promptsEl = document.querySelector('#chatbot-prompts');
 
+    const sessionStorageKey = 'medika-chatbot-session-id';
+    let sessionId = getOrCreateSessionId();
+
+    function generateUUID() {
+      if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+        return crypto.randomUUID();
+      }
+      return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+        const r = Math.random() * 16 | 0;
+        const v = c === 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+      });
+    }
+
+    function getOrCreateSessionId() {
+      try {
+        const storedSessionId = localStorage.getItem(sessionStorageKey);
+        if (storedSessionId) return storedSessionId;
+
+        const newSessionId = generateUUID();
+        localStorage.setItem(sessionStorageKey, newSessionId);
+        return newSessionId;
+      } catch (error) {
+        console.warn('Không thể truy cập localStorage cho phiên chatbot:', error);
+        return generateUUID();
+      }
+    }
+
     toggleBtn.addEventListener('click', () => {
       windowEl.classList.toggle('hidden');
       if (!windowEl.classList.contains('hidden')) {
@@ -72,6 +100,12 @@
     });
 
     clearBtn?.addEventListener('click', () => {
+      sessionId = generateUUID();
+      try {
+        localStorage.setItem(sessionStorageKey, sessionId);
+      } catch (error) {
+        console.warn('Không thể lưu phiên chatbot mới vào localStorage:', error);
+      }
       messagesEl.innerHTML = `
         <div class="chat-msg bot">
           Xin chào! Tôi là <strong>Trợ lý Y tế Thông minh của Medika Clinic</strong> 🏥.<br><br>
@@ -121,7 +155,7 @@
         const res = await fetch('/api/chatbot/message', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message: msg })
+          body: JSON.stringify({ message: msg, sessionId: sessionId })
         });
 
         const data = await res.json();
@@ -174,6 +208,27 @@
               <button class="chatbot-prompt-chip" onclick="window.handleChatbotAction('${qa.actionType}', '${escapeHtml(qa.value || '')}')">${escapeHtml(qa.label)}</button>
             `).join('') +
             `</div>`;
+        }
+
+        // Nếu hệ thống vừa tạo lịch hẹn thành công qua AI Function Calling, kích hoạt tải lại UI
+        if (data.shouldRefreshUi || data.intent === 'appointment_created') {
+          try {
+            window.dispatchEvent(new CustomEvent('medika:appointment-created', { detail: data }));
+            if (typeof window.loadAppointments === 'function') window.loadAppointments();
+            if (typeof loadAppointments === 'function') loadAppointments();
+          } catch (e) {
+            console.warn('Lỗi khi cập nhật UI sau khi AI đặt lịch:', e);
+          }
+
+          if (!location.pathname.includes('/user.html')) {
+            botReplyHtml += `
+              <div style="margin-top:10px;">
+                <a href="/user.html" style="display:inline-block;padding:6px 12px;background:#0284c7;color:#fff;text-decoration:none;border-radius:6px;font-size:0.8rem;font-weight:600;">
+                  👉 Xem danh sách Lịch khám của bạn
+                </a>
+              </div>
+            `;
+          }
         }
 
         const msgDiv = document.createElement('div');
